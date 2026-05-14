@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { User, Product } from '../../core/types';
-import { MOCK_PRODUCTS } from '../../services/mock/mockData';
 import { authService } from '../../services/authService';
+import { apiService } from '../../services/apiService';
 
 interface CartItem {
   productId: string;
@@ -44,18 +44,21 @@ export const useStore = create<AppState>()(
       user: null,
       isAuthenticated: false,
       favorites: [],
-      products: MOCK_PRODUCTS,
+      products: [],
       cart: [],
 
       login: async (email, password) => {
         await authService.signIn({ email, password });
         const user = await authService.getCurrentUser();
-        set({ user: user as any, isAuthenticated: true });
+        if (user) {
+          const profile = await apiService.getProfileById(user.id);
+          set({ user: { ...user, ...profile } as any, isAuthenticated: true });
+        }
       },
 
       logout: async () => {
         await authService.signOut();
-        set({ user: null, isAuthenticated: false });
+        set({ user: null, isAuthenticated: false, products: [] });
       },
 
       register: async (data) => {
@@ -66,7 +69,10 @@ export const useStore = create<AppState>()(
             role: data.role
         });
         const user = await authService.getCurrentUser();
-        set({ user: user as any, isAuthenticated: true });
+        if (user) {
+          const profile = await apiService.getProfileById(user.id);
+          set({ user: { ...user, ...profile } as any, isAuthenticated: true });
+        }
       },
 
       toggleFavorite: (productId) => {
@@ -117,21 +123,24 @@ export const useStore = create<AppState>()(
       clearCart: () => set({ cart: [] }),
 
       fetchProducts: async () => {
-        // Mock fetch
-        set({ products: MOCK_PRODUCTS });
+        const products = await apiService.getProducts();
+        set({ products });
       },
 
-      addProduct: (product) => {
-        set({ products: [product, ...get().products] });
+      addProduct: async (product) => {
+        const newProduct = await apiService.createProduct(product);
+        set({ products: [newProduct, ...get().products] });
       },
 
-      updateProduct: (product) => {
+      updateProduct: async (product) => {
+        const updatedProduct = await apiService.updateProduct(product.id, product);
         set({
-          products: get().products.map(p => p.id === product.id ? product : p)
+          products: get().products.map(p => p.id === product.id ? updatedProduct : p)
         });
       },
 
-      deleteProduct: (productId) => {
+      deleteProduct: async (productId) => {
+        await apiService.deleteProduct(productId);
         set({
           products: get().products.filter(p => p.id !== productId)
         });

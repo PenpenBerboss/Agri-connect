@@ -21,6 +21,7 @@ import {
 import { useStore } from '../../application/store/useStore';
 import { MOCK_USERS, MOCK_PRODUCTS, MOCK_REVIEWS } from '../../services/mock/mockData';
 import { formatPrice, cn } from '../../shared/utils';
+import { Modal } from '../../components/ui/Modal';
 import { motion, AnimatePresence } from 'motion/react';
 
 type AdminTab = 'stats' | 'users' | 'products' | 'reviews' | 'pending';
@@ -29,6 +30,9 @@ export const AdminDashboard = () => {
   const { user, logout, register: registerUser } = useStore();
   const [activeTab, setActiveTab] = useState<AdminTab>('stats');
   const [pendingSellers, setPendingSellers] = useState<any[]>([]);
+  const [showModal, setShowModal] = useState(false);
+  const [modalTitle, setModalTitle] = useState('');
+  const [modalMessage, setModalMessage] = useState('');
 
   React.useEffect(() => {
     const saved = localStorage.getItem('AGR_PENDING_SELLERS');
@@ -43,7 +47,10 @@ export const AdminDashboard = () => {
   const validateSeller = async (seller: any) => {
     await registerUser(seller);
     savePendingSellers(pendingSellers.filter(s => s.email !== seller.email));
-    alert(`Vendeur ${seller.name} validé.`);
+    setModalTitle('Compte validé');
+    setModalMessage(`Le vendeur ${seller.name} a été validé avec succès.`);
+    setShowModal(true);
+    setActiveTab('stats');
   };
 
   const rejectSeller = (email: string) => {
@@ -364,6 +371,24 @@ export const AdminDashboard = () => {
             {renderContent()}
           </motion.div>
         </AnimatePresence>
+        
+        <Modal 
+          isOpen={showModal} 
+          onClose={() => setShowModal(false)} 
+          title={modalTitle}
+        >
+          <p className="text-slate-600 leading-relaxed font-medium">
+            {modalMessage}
+          </p>
+          <div className="mt-8">
+            <button 
+              onClick={() => setShowModal(false)}
+              className="w-full py-4 bg-emerald-500 text-white font-bold rounded-[1.5rem] hover:bg-emerald-600 transition-colors"
+            >
+              Fermer
+            </button>
+          </div>
+        </Modal>
       </main>
     </div>
   );

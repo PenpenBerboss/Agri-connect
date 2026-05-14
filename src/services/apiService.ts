@@ -7,6 +7,7 @@ const api = axios.create({
 export const apiService = {
   // Profiles (Admin)
   getProfiles: () => api.get('/profiles').then(res => res.data),
+  getProfileById: (id: string) => api.get(`/profiles/${id}`).then(res => res.data),
   updateProfileStatus: (id: string, status: string) => api.put(`/profiles/${id}/status`, { status }).then(res => res.data),
 
   // Products

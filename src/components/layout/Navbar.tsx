@@ -93,7 +93,7 @@ export const Navbar = () => {
               <div className="flex items-center gap-3 pl-4 border-l border-slate-200 group cursor-pointer" onClick={() => navigate('/dashboard')}>
                 <div className="text-right hidden lg:block">
                   <p className="text-xs font-bold text-slate-800">{user?.name}</p>
-                  <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">{user?.role === 'farmer' ? 'Vendeur Certifié' : 'Acheteur'}</p>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">{user?.role === 'admin' ? 'Administrateur' : user?.role === 'farmer' ? 'Vendeur Certifié' : 'Acheteur'}</p>
                 </div>
                 <div className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center text-white font-bold shadow-md group-hover:scale-105 transition-transform overflow-hidden border-2 border-white">
                   {user?.avatar ? <img src={user.avatar} alt="" /> : user?.name?.substring(0, 2).toUpperCase()}

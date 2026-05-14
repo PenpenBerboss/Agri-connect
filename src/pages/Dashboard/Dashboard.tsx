@@ -41,6 +41,7 @@ type TabType = 'overview' | 'catalogue' | 'transactions' | 'reports' | 'settings
 
 export const Dashboard = () => {
   const { user, logout, addProduct, products } = useStore();
+  const userProducts = products.filter(p => p.sellerId === user?.id);
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [showAddSale, setShowAddSale] = useState(false);

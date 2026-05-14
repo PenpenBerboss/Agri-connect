@@ -28,6 +28,13 @@ async function startServer() {
     res.json(data);
   });
 
+  app.get("/api/profiles/:id", async (req, res) => {
+    const { id } = req.params;
+    const { data, error } = await supabaseAdmin.from('profiles').select('*').eq('id', id).single();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data);
+  });
+
   app.put("/api/profiles/:id/status", async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;

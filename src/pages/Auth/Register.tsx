@@ -5,10 +5,12 @@ import { Mail, Lock, User, Phone, Leaf, MoveRight, UserPlus, ShieldCheck } from 
 import { useStore } from '../../application/store/useStore';
 import { motion } from 'motion/react';
 import { cn } from '../../shared/utils';
+import { Modal } from '../../components/ui/Modal';
 
 export const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [role, setRole] = useState<'buyer' | 'farmer'>('buyer');
+  const [showModal, setShowModal] = useState(false);
   const { register: registerUser } = useStore();
   const navigate = useNavigate();
   const { register, handleSubmit, formState: { errors } } = useForm();
@@ -19,8 +21,7 @@ export const Register = () => {
       if (role === 'farmer') {
         const pending = JSON.parse(localStorage.getItem('AGR_PENDING_SELLERS') || '[]');
         localStorage.setItem('AGR_PENDING_SELLERS', JSON.stringify([...pending, { ...data, role }]));
-        alert('Votre demande de création de compte vendeur a été soumise. Elle est en attente de validation par l\'administrateur.');
-        navigate('/login');
+        setShowModal(true);
       } else {
         await registerUser({ ...data, role });
         navigate('/dashboard');
@@ -34,6 +35,24 @@ export const Register = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center py-20 px-4 sm:px-6 lg:px-8 bg-slate-50 relative overflow-hidden">
+      <Modal 
+        isOpen={showModal} 
+        onClose={() => navigate('/login')} 
+        title="Demande Soumise"
+      >
+        <p className="text-slate-600 leading-relaxed">
+          Votre demande de création de compte vendeur a été soumise. Elle est en attente de validation par l'administrateur.
+        </p>
+        <div className="mt-8">
+          <button 
+            onClick={() => navigate('/login')}
+            className="w-full py-4 bg-primary-dark text-white font-bold rounded-[1.5rem] hover:bg-primary-light transition-colors"
+          >
+            Retour à la connexion
+          </button>
+        </div>
+      </Modal>
+
       {/* Dynamic Background */}
       <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-primary-light/5 rounded-full blur-[120px] -translate-x-1/2 -translate-y-1/2" />
       <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-accent/5 rounded-full blur-[120px] translate-x-1/2 translate-y-1/2" />
