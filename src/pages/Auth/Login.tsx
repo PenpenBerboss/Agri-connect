@@ -15,6 +15,13 @@ export const Login = () => {
   const onSubmit = async (data: any) => {
     setIsLoading(true);
     try {
+      const pending = JSON.parse(localStorage.getItem('AGR_PENDING_SELLERS') || '[]');
+      const isPending = pending.find((s:any) => s.email === data.email);
+      if (isPending) {
+         alert('Votre compte est en attente de validation par l\'administrateur.');
+         setIsLoading(false);
+         return;
+      }
       await login(data.email, data.password);
       navigate('/dashboard');
     } catch (error) {

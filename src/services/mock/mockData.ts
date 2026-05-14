@@ -3,7 +3,17 @@ import massiveData from './generatedMassiveData.json';
 
 // Export massive data for recommendation system
 export const MOCK_PRODUCTS: Product[] = massiveData.products as unknown as Product[];
-export const MOCK_USERS: User[] = massiveData.users as unknown as User[];
+export const MOCK_USERS: User[] = [
+  ...massiveData.users as unknown as User[],
+  {
+    id: 'admin-1',
+    name: 'Administrateur',
+    email: 'admin@agriconnect.com',
+    role: 'admin',
+    joinedAt: '2024-01-01',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin'
+  }
+];
 export const MOCK_HISTORY = massiveData.history;
 export const MOCK_REVIEWS: Review[] = massiveData.reviews as unknown as Review[];
 
@@ -18,7 +28,6 @@ export const CATEGORIES: { label: string; value: Category; icon: string; imagePa
   { label: 'Fruits', value: 'fruits', icon: '🍍', imagePath: '/assets/fruit.jpg' },
   { label: 'Légumes', value: 'légumes', icon: '🥬', imagePath: '/assets/legume.jpg' },
   { label: 'Semences', value: 'semences', icon: '🌱', imagePath: '/assets/semence.jpg' },
-  { label: 'Engrais', value: 'engrais', icon: '🧪', imagePath: '/assets/engrais.jpg' },
 ];
 
 export const CAMEROON_CITIES = [

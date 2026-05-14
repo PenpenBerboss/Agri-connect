@@ -23,11 +23,32 @@ import { MOCK_USERS, MOCK_PRODUCTS, MOCK_REVIEWS } from '../../services/mock/moc
 import { formatPrice, cn } from '../../shared/utils';
 import { motion, AnimatePresence } from 'motion/react';
 
-type AdminTab = 'stats' | 'users' | 'products' | 'reviews';
+type AdminTab = 'stats' | 'users' | 'products' | 'reviews' | 'pending';
 
 export const AdminDashboard = () => {
-  const { user, logout } = useStore();
+  const { user, logout, register: registerUser } = useStore();
   const [activeTab, setActiveTab] = useState<AdminTab>('stats');
+  const [pendingSellers, setPendingSellers] = useState<any[]>([]);
+
+  React.useEffect(() => {
+    const saved = localStorage.getItem('AGR_PENDING_SELLERS');
+    if (saved) setPendingSellers(JSON.parse(saved));
+  }, []);
+
+  const savePendingSellers = (sellers: any[]) => {
+    localStorage.setItem('AGR_PENDING_SELLERS', JSON.stringify(sellers));
+    setPendingSellers(sellers);
+  };
+   
+  const validateSeller = async (seller: any) => {
+    await registerUser(seller);
+    savePendingSellers(pendingSellers.filter(s => s.email !== seller.email));
+    alert(`Vendeur ${seller.name} validé.`);
+  };
+
+  const rejectSeller = (email: string) => {
+    savePendingSellers(pendingSellers.filter(s => s.email !== email));
+  };
 
   const stats = [
     { label: 'Utilisateurs', value: MOCK_USERS.length.toString(), icon: <Users />, color: 'from-blue-400 to-blue-600', trend: '+12%', isUp: true },
@@ -35,6 +56,33 @@ export const AdminDashboard = () => {
     { label: 'Produits Actifs', value: MOCK_PRODUCTS.length.toString(), icon: <Boxes />, color: 'from-amber-400 to-amber-600', trend: '+8%', isUp: true },
     { label: 'Alertes', value: '3', icon: <AlertCircle />, color: 'from-rose-400 to-rose-600', trend: '-2', isUp: false },
   ];
+
+  const [users, setUsers] = useState(MOCK_USERS);
+  const [products, setProducts] = useState(MOCK_PRODUCTS);
+  const [reviews, setReviews] = useState(MOCK_REVIEWS);
+  const [usersPage, setUsersPage] = useState(1);
+  const [productsPage, setProductsPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
+
+  const usersPaginated = users.slice((usersPage - 1) * ITEMS_PER_PAGE, usersPage * ITEMS_PER_PAGE);
+  const productsPaginated = products.slice((productsPage - 1) * ITEMS_PER_PAGE, productsPage * ITEMS_PER_PAGE);
+
+  const deleteUser = (id: string) => setUsers(users.filter(u => u.id !== id));
+  const deleteProduct = (id: string) => setProducts(products.filter(p => p.id !== id));
+  const approveReview = (id: string) => setReviews(reviews.filter(r => r.id !== id));
+  const deleteReview = (id: string) => setReviews(reviews.filter(r => r.id !== id));
+
+  const Pagination = ({ totalItems, currentPage, setPage }: { totalItems: number, currentPage: number, setPage: (p: number) => void }) => {
+    const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+    if (totalPages <= 1) return null;
+    return (
+      <div className="flex gap-2 p-6 border-t border-slate-100 justify-center">
+        <button disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)} className="px-4 py-2 bg-slate-100 font-bold text-xs rounded-lg disabled:opacity-50">Précédent</button>
+        <span className="px-4 py-2 font-bold text-xs flex items-center">Page {currentPage} / {totalPages}</span>
+        <button disabled={currentPage === totalPages} onClick={() => setPage(currentPage + 1)} className="px-4 py-2 bg-slate-100 font-bold text-xs rounded-lg disabled:opacity-50">Suivant</button>
+      </div>
+    );
+  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -97,7 +145,7 @@ export const AdminDashboard = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
-                  {MOCK_USERS.map((u) => (
+                  {usersPaginated.map((u) => (
                     <tr key={u.id} className="hover:bg-slate-50/50 transition-all group">
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-4">
@@ -124,22 +172,48 @@ export const AdminDashboard = () => {
                       </td>
                       <td className="px-8 py-6 text-[10px] font-bold text-slate-400">{u.joinedAt}</td>
                       <td className="px-8 py-6 text-right">
-                        <button className="p-2 text-slate-400 hover:text-slate-600"><MoreVertical size={18} /></button>
+                        <button onClick={() => deleteUser(u.id)} className="p-2 text-rose-400 hover:text-rose-600"><Trash2 size={18} /></button>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+              <Pagination totalItems={users.length} currentPage={usersPage} setPage={setUsersPage} />
             </div>
           </div>
         );
 
       case 'products':
         return (
-          <div className="bg-white rounded-[2.5rem] overflow-hidden border border-slate-200 shadow-xl text-center p-20">
-            <Boxes size={48} className="mx-auto mb-6 text-slate-200" />
-            <h3 className="text-xl font-black text-slate-900 tracking-tight mb-2">Modération des Produits</h3>
-            <p className="text-slate-500 font-medium max-w-sm mx-auto">Interface de validation et gestion du catalogue global en cours de déploiement.</p>
+          <div className="bg-white rounded-[2.5rem] overflow-hidden border border-slate-200 shadow-xl">
+            <div className="p-8 border-b border-slate-100 flex justify-between items-center">
+              <h3 className="text-xl font-black text-slate-900 tracking-tight">Gestion des Produits</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-widest">
+                  <tr>
+                    <th className="px-8 py-5 text-left">Produit</th>
+                    <th className="px-8 py-5 text-left">Catégorie</th>
+                    <th className="px-8 py-5 text-left">Prix</th>
+                    <th className="px-8 py-5 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {productsPaginated.map((p) => (
+                    <tr key={p.id}>
+                      <td className="px-8 py-6 font-black text-sm">{p.name}</td>
+                      <td className="px-8 py-6 text-sm text-slate-500">{p.category}</td>
+                      <td className="px-8 py-6 text-sm">{formatPrice(p.price)}</td>
+                      <td className="px-8 py-6 text-right">
+                        <button onClick={() => deleteProduct(p.id)} className="text-rose-500 hover:text-rose-700 font-bold text-xs">Supprimer</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <Pagination totalItems={products.length} currentPage={productsPage} setPage={setProductsPage} />
+            </div>
           </div>
         );
 
@@ -149,12 +223,12 @@ export const AdminDashboard = () => {
             <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-xl flex justify-between items-center">
               <h3 className="text-xl font-black text-slate-900 tracking-tight">Signalement & Avis</h3>
               <span className="bg-rose-50 text-rose-500 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">
-                2 Signalements en attente
+                {reviews.length} Avis en attente
               </span>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {MOCK_REVIEWS.map((review) => (
+              {reviews.map((review) => (
                 <div key={review.id} className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm relative overflow-hidden group">
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex items-center gap-3">
@@ -169,10 +243,10 @@ export const AdminDashboard = () => {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <button className="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-500 hover:text-white transition-all">
+                      <button onClick={() => approveReview(review.id)} className="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-500 hover:text-white transition-all">
                         <CheckCircle size={16} />
                       </button>
-                      <button className="p-2 bg-rose-50 text-rose-500 rounded-lg hover:bg-rose-500 hover:text-white transition-all">
+                      <button onClick={() => deleteReview(review.id)} className="p-2 bg-rose-50 text-rose-500 rounded-lg hover:bg-rose-500 hover:text-white transition-all">
                         <Trash2 size={16} />
                       </button>
                     </div>
@@ -181,6 +255,35 @@ export const AdminDashboard = () => {
                 </div>
               ))}
             </div>
+          </div>
+        );
+
+      case 'pending':
+        return (
+          <div className="bg-white rounded-[2.5rem] overflow-hidden border border-slate-200 shadow-xl">
+            <div className="p-8 border-b border-slate-100">
+              <h3 className="text-xl font-black text-slate-900 tracking-tight">Demandes Vendeurs en attente</h3>
+            </div>
+            {pendingSellers.length === 0 ? (
+               <p className="p-8 text-center text-slate-500">Aucune demande en attente.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <tbody className="divide-y divide-slate-50">
+                    {pendingSellers.map((seller) => (
+                      <tr key={seller.email}>
+                        <td className="px-8 py-6">{seller.name}</td>
+                        <td className="px-8 py-6">{seller.email}</td>
+                        <td className="px-8 py-6 text-right">
+                          <button onClick={() => validateSeller(seller)} className="text-emerald-500 font-bold text-xs mr-4">Valider</button>
+                          <button onClick={() => rejectSeller(seller.email)} className="text-rose-500 font-bold text-xs">Rejeter</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         );
 
@@ -209,6 +312,7 @@ export const AdminDashboard = () => {
             { id: 'users', label: 'Utilisateurs', icon: <Users /> },
             { id: 'products', label: 'Produits', icon: <Boxes /> },
             { id: 'reviews', label: 'Modération', icon: <Star /> },
+            { id: 'pending', label: 'Demandes Vendeurs', icon: <UserCheck /> },
           ].map((item) => (
             <button 
               key={item.id}

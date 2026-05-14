@@ -1,8 +1,13 @@
-import { Briefcase, MoveRight, Filter, FileDown } from 'lucide-react';
+import { Briefcase, MoveRight, Filter, FileDown, Plus, X } from 'lucide-react';
 import { MOCK_ORDERS } from '../../services/mock/mockData';
 import { formatPrice, cn } from '../../shared/utils';
+import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 
 export const TransactionsTab = () => {
+  const navigate = useNavigate();
+  const [showAddSale, setShowAddSale] = useState(false);
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'delivered': return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20';
@@ -23,6 +28,13 @@ export const TransactionsTab = () => {
     }
   };
 
+  const handleSaleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    alert(`Nouvelle vente: ${formData.get('productName')} - ${formData.get('quantity')} unités.`);
+    setShowAddSale(false);
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sleek">
@@ -31,13 +43,12 @@ export const TransactionsTab = () => {
           <p className="text-slate-500 font-medium text-sm">Suivez vos revenus et l'état de vos livraisons.</p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="flex items-center space-x-2 bg-slate-50 border border-slate-100 p-4 rounded-xl text-slate-600 hover:bg-slate-100 transition-all font-black text-[10px] uppercase tracking-widest">
-            <Filter className="w-4 h-4" />
-            <span>Filtrer</span>
-          </button>
-          <button className="flex items-center space-x-2 bg-slate-950 text-white px-6 py-4 rounded-xl hover:bg-primary-dark shadow-xl shadow-slate-950/20 transition-all font-black text-[10px] uppercase tracking-widest">
-            <FileDown className="w-4 h-4" />
-            <span>Exporter CSV</span>
+          <button 
+            onClick={() => setShowAddSale(true)}
+            className="flex items-center space-x-2 bg-slate-950 text-white px-6 py-4 rounded-xl hover:bg-primary-dark shadow-xl shadow-slate-950/20 transition-all font-black text-[10px] uppercase tracking-widest"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Nouvelle Vente</span>
           </button>
         </div>
       </div>
@@ -52,7 +63,6 @@ export const TransactionsTab = () => {
                 <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Produit</th>
                 <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Montant</th>
                 <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Status</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Paiement</th>
                 <th className="px-8 py-6"></th>
               </tr>
             </thead>
@@ -65,18 +75,12 @@ export const TransactionsTab = () => {
                     </div>
                     <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-widest">{order.date}</p>
                   </td>
+                  <td className="px-8 py-6 text-sm font-bold text-slate-900">{order.customerName}</td>
                   <td className="px-8 py-6">
-                    <p className="text-sm font-black text-slate-900">{order.customerName}</p>
+                    <p className="text-sm font-black text-slate-900">{order.productName}</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{order.quantity} {order.unit}</p>
                   </td>
-                  <td className="px-8 py-6">
-                    <div className="flex flex-col">
-                       <p className="text-sm font-black text-slate-900">{order.productName}</p>
-                       <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{order.quantity} {order.unit}</p>
-                    </div>
-                  </td>
-                  <td className="px-8 py-6">
-                    <p className="text-sm font-black text-primary-dark tracking-tighter">{formatPrice(order.amount)}</p>
-                  </td>
+                  <td className="px-8 py-6 text-sm font-black text-primary-dark tracking-tighter">{formatPrice(order.amount)}</td>
                   <td className="px-8 py-6">
                     <span className={cn(
                       "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border",
@@ -86,10 +90,10 @@ export const TransactionsTab = () => {
                     </span>
                   </td>
                   <td className="px-8 py-6">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{order.paymentMethod}</span>
-                  </td>
-                  <td className="px-8 py-6">
-                    <button className="p-2.5 bg-white border border-slate-100 rounded-xl text-slate-400 hover:text-primary-dark hover:bg-slate-50 transition-all shadow-sm">
+                    <button 
+                      onClick={() => navigate(`/orders/${order.id}`)}
+                      className="p-2.5 bg-white border border-slate-100 rounded-xl text-slate-400 hover:text-primary-dark hover:bg-slate-50 transition-all shadow-sm"
+                    >
                       <MoveRight className="w-4 h-4" />
                     </button>
                   </td>
@@ -98,12 +102,26 @@ export const TransactionsTab = () => {
             </tbody>
           </table>
         </div>
-        <div className="p-8 bg-slate-50/50 border-t border-slate-100 text-center">
-           <button className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-colors">
-              Charger plus de transactions
-           </button>
-        </div>
       </div>
+      
+      <AnimatePresence>
+        {showAddSale && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowAddSale(false)} className="absolute inset-0 bg-slate-950/60 backdrop-blur-md" />
+            <motion.div initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }} className="relative w-full max-w-lg bg-white rounded-[2rem] p-10 shadow-2xl">
+                <div className="flex justify-between items-start mb-8">
+                    <h2 className="text-2xl font-black">Nouvelle Vente</h2>
+                    <button onClick={() => setShowAddSale(false)} className="p-2 bg-slate-50 rounded-lg hover:bg-slate-100"><X size={20} /></button>
+                </div>
+                <form onSubmit={handleSaleSubmit} className="space-y-4">
+                    <input name="productName" placeholder="Nom du produit" className="w-full bg-slate-50 rounded-xl p-4 text-sm font-bold outline-none" required />
+                    <input name="quantity" type="number" placeholder="Quantité" className="w-full bg-slate-50 rounded-xl p-4 text-sm font-bold outline-none" required />
+                    <button type="submit" className="w-full bg-slate-950 text-white p-4 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-primary-dark transition-all">Enregistrer</button>
+                </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

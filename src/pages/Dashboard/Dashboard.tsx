@@ -42,6 +42,7 @@ export const Dashboard = () => {
   const { user, logout, addProduct, products } = useStore();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [showAddProduct, setShowAddProduct] = useState(false);
+  const [showAddSale, setShowAddSale] = useState(false);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -70,7 +71,12 @@ export const Dashboard = () => {
     setActiveTab('catalogue');
   };
 
-  const userProducts = products.filter(p => p.sellerId === user?.id);
+  const handleSaleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    alert(`Nouvelle vente: ${formData.get('productName')} - ${formData.get('quantity')} unités.`);
+    setShowAddSale(false);
+  };
 
   const totalViews = userProducts.reduce((sum, p) => sum + (p.views || 0), 0);
   const avgRating = userProducts.length > 0 

@@ -12,6 +12,7 @@ import { MapView } from './pages/Map/MapView';
 import { Favorites } from './pages/Favorites';
 import { Cart } from './pages/Cart';
 import { AdminDashboard } from './pages/Dashboard/AdminDashboard';
+import { SellerProfile } from './pages/SellerProfile';
 import { useStore } from './application/store/useStore';
 
 // Protected Route Component
@@ -36,6 +37,7 @@ export default function App() {
           <Route index element={<Home />} />
           <Route path="products" element={<Products />} />
           <Route path="products/:id" element={<ProductDetails />} />
+          <Route path="seller/:id" element={<SellerProfile />} />
           <Route path="map" element={<MapView />} />
           <Route path="favorites" element={<Favorites />} />
           <Route path="cart" element={<Cart />} />

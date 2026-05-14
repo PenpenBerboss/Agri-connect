@@ -88,8 +88,8 @@ export const Products = () => {
 
         <div className="flex flex-col lg:flex-row gap-10">
           {/* Sidebar Filters */}
-          <aside className="hidden lg:block w-72 shrink-0 h-fit sticky top-28">
-            <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-xl shadow-slate-200/50 space-y-10">
+          <aside className="hidden lg:block w-72 shrink-0 h-[calc(100vh-140px)] sticky top-28">
+            <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-xl shadow-slate-200/50 space-y-10 h-full overflow-y-auto">
               {/* Category Filter */}
               <div>
                 <h3 className="font-extrabold text-slate-900 text-sm uppercase tracking-widest mb-6 flex items-center">
@@ -246,8 +246,8 @@ export const Products = () => {
                            </p>
 
                            <div className="mt-auto pt-6 border-t border-slate-100 flex items-center justify-between gap-4">
-                              <div className="flex flex-col min-w-0">
-                                 <span className="text-xl md:text-2xl font-black text-primary-dark leading-none tracking-tighter truncate">{formatPrice(product.price)}</span>
+                              <div className="flex flex-col">
+                                 <span className="text-xl md:text-2xl font-black text-primary-dark leading-none tracking-tighter">{formatPrice(product.price)}</span>
                                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">/{product.unit}</span>
                               </div>
                               <Link 

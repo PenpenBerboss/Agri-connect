@@ -3,8 +3,7 @@ export type Category =
   | 'tubercules' 
   | 'fruits' 
   | 'légumes' 
-  | 'semences' 
-  | 'engrais';
+  | 'semences';
 
 export interface Review {
   id: string;

@@ -16,8 +16,15 @@ export const Register = () => {
   const onSubmit = async (data: any) => {
     setIsLoading(true);
     try {
-      await registerUser({ ...data, role });
-      navigate('/dashboard');
+      if (role === 'farmer') {
+        const pending = JSON.parse(localStorage.getItem('AGR_PENDING_SELLERS') || '[]');
+        localStorage.setItem('AGR_PENDING_SELLERS', JSON.stringify([...pending, { ...data, role }]));
+        alert('Votre demande de création de compte vendeur a été soumise. Elle est en attente de validation par l\'administrateur.');
+        navigate('/login');
+      } else {
+        await registerUser({ ...data, role });
+        navigate('/dashboard');
+      }
     } catch (error) {
        alert('Erreur inscription');
     } finally {

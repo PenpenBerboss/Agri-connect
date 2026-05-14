@@ -80,6 +80,44 @@ export const BuyerProfile = () => {
           ))}
         </div>
 
+        {/* Mes Commandes */}
+        <div className="bg-white rounded-[3rem] p-10 border border-slate-200 shadow-sm mb-8">
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-8">Mes Commandes</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-widest">
+                <tr>
+                  <th className="px-6 py-4 text-left">ID</th>
+                  <th className="px-6 py-4 text-left">Date</th>
+                  <th className="px-6 py-4 text-left">Produit</th>
+                  <th className="px-6 py-4 text-left">Quantité</th>
+                  <th className="px-6 py-4 text-left">Montant</th>
+                  <th className="px-6 py-4 text-left">Statut</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {MOCK_ORDERS.map((order) => (
+                  <tr key={order.id}>
+                    <td className="px-6 py-4 text-sm font-bold">{order.id}</td>
+                    <td className="px-6 py-4 text-sm text-slate-500">{order.date}</td>
+                    <td className="px-6 py-4 text-sm font-bold text-slate-900">{order.productName}</td>
+                    <td className="px-6 py-4 text-sm">{order.quantity} {order.unit}</td>
+                    <td className="px-6 py-4 text-sm font-black">{formatPrice(order.amount)}</td>
+                    <td className="px-6 py-4 text-sm">
+                      <span className={cn(
+                        "px-3 py-1 rounded-full text-[10px] font-black uppercase",
+                        order.status === 'delivered' ? "bg-green-100 text-green-600" : "bg-primary-light/20 text-primary-dark"
+                      )}>
+                        {order.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
         {/* Recent Purchases */}
         <div className="bg-white rounded-[3rem] p-10 border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between mb-8">
