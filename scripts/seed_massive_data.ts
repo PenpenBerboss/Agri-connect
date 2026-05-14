@@ -2,6 +2,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { randomUUID } from 'crypto';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,7 +27,7 @@ const CATEGORIES = [
   { id: 'engrais', fallback: 'engrais.jpg', keywords: ['bio', 'fiente'], subs: ['Engrais NPK', 'Fiente de poulet'] }
 ];
 
-const LOCAL_MAPS = {
+const LOCAL_MAPS: Record<string, string> = {
   'manioc': 'manioc.jpg',
   'maïs': 'cereale.jpg',
   'cacao': 'cacao.jpg',
@@ -39,7 +40,7 @@ const LOCAL_MAPS = {
   'haricot': 'haricot.jpg'
 };
 
-const PRODUCT_NAMES = {
+const PRODUCT_NAMES: Record<string, string[]> = {
   'manioc': ['Manioc de Sangmélima', 'Cossettes de Manioc', 'Farine de Manioc (Gari)', 'Bâtons de Manioc'],
   'maïs': ['Maïs jaune de l\'Ouest', 'Maïs blanc premium', 'Farine de maïs tamisée'],
   'cacao': ['Fèves de cacao séchées', 'Cacao Grade A Bertoua', 'Pâte de cacao artisanale'],
@@ -54,11 +55,11 @@ const PRODUCT_NAMES = {
   'riz local': ['Riz Ndop Long Grain', 'Riz Yagoua décortiqué']
 };
 
-function getRandomElement(arr) {
+function getRandomElement<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-function getRandomInRange(min, max, decimals = 2) {
+function getRandomInRange(min: number, max: number, decimals = 2) {
   const str = (Math.random() * (max - min) + min).toFixed(decimals);
   return parseFloat(str);
 }
@@ -70,7 +71,7 @@ for (let i = 1; i <= 500; i++) {
   const city = getRandomElement(CITIES);
   const role = i <= 100 ? 'farmer' : 'buyer'; // 100 farmers, 400 buyers
   users.push({
-    id: `user_${i}`,
+    id: randomUUID(),
     name: `User ${i} Cameroon`,
     email: `user${i}@example.cm`,
     phone: `+237 6${Math.floor(Math.random() * 89999999 + 10000000)}`,
@@ -115,7 +116,7 @@ for (let i = 1; i <= 3000; i++) {
   }
 
   products.push({
-    id: `prod_${i}`,
+    id: randomUUID(),
     name: name,
     slug: name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '') + `-${i}`,
     description: `Produit de haute qualité cultivé avec soin à ${city.name}. Frais et direct du producteur.`,
@@ -181,11 +182,10 @@ for (let i = 1; i <= 1000; i++) {
   const buyer = getRandomElement(buyers);
   const product = getRandomElement(products);
   reviews.push({
-    id: `rev_${i}`,
-    productId: product.id,
-    userId: buyer.id,
-    userName: buyer.name,
-    userAvatar: buyer.avatar,
+    id: randomUUID(),
+    productId: product.id, // Gardé pour référence interne si besoin
+    buyerId: buyer.id,
+    sellerId: product.sellerId,
     rating: getRandomInRange(3, 5, 0),
     comment: getRandomElement([
       "Qualité exceptionnelle, je recommande !",
