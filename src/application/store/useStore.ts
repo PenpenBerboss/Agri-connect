@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { User, Product } from '../types';
-import { MOCK_USERS, MOCK_PRODUCTS } from '../data/mockData';
+import { User, Product } from '../../core/types';
+import { MOCK_USERS, MOCK_PRODUCTS } from '../../services/mock/mockData';
 
 interface CartItem {
   productId: string;
@@ -32,6 +32,9 @@ interface AppState {
 
   // Product fetching (mock)
   fetchProducts: () => Promise<void>;
+  addProduct: (product: Product) => void;
+  updateProduct: (product: Product) => void;
+  deleteProduct: (productId: string) => void;
 }
 
 export const useStore = create<AppState>()(
@@ -117,6 +120,22 @@ export const useStore = create<AppState>()(
       fetchProducts: async () => {
         // Mock fetch
         set({ products: MOCK_PRODUCTS });
+      },
+
+      addProduct: (product) => {
+        set({ products: [product, ...get().products] });
+      },
+
+      updateProduct: (product) => {
+        set({
+          products: get().products.map(p => p.id === product.id ? product : p)
+        });
+      },
+
+      deleteProduct: (productId) => {
+        set({
+          products: get().products.filter(p => p.id !== productId)
+        });
       }
     }),
     {
@@ -125,7 +144,8 @@ export const useStore = create<AppState>()(
         favorites: state.favorites,
         cart: state.cart,
         user: state.user,
-        isAuthenticated: state.isAuthenticated
+        isAuthenticated: state.isAuthenticated,
+        products: state.products
       }),
     }
   )

@@ -23,8 +23,8 @@ import {
   Pie,
   Cell
 } from 'recharts';
-import { MOCK_STATS } from '../../data/mockData';
-import { formatPrice, cn } from '../../lib/utils';
+import { MOCK_STATS } from '../../services/mock/mockData';
+import { formatPrice, cn } from '../../shared/utils';
 
 const COLORS = ['#4CAF50', '#8BC34A', '#CDDC39', '#FFC107'];
 

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import { MOCK_PRODUCTS, CATEGORIES } from '../../data/mockData';
-import { formatPrice, cn } from '../../lib/utils';
+import { MOCK_PRODUCTS, CATEGORIES } from '../../services/mock/mockData';
+import { formatPrice, cn } from '../../shared/utils';
 import { Link } from 'react-router-dom';
-import { MapPin, Search, Navigation, Layers, Filter, ArrowRight, LocateFixed } from 'lucide-react';
+import { MapPin, Search, Navigation, Layers, Filter, MoveRight, LocateFixed } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 // Fix Leaflet icon issue
@@ -177,7 +177,7 @@ export const MapView = () => {
                      </p>
                      <div className="mt-3 flex items-center justify-between">
                         <p className="font-black text-lg text-primary-dark tracking-tighter">{formatPrice(p.price)}</p>
-                        <ArrowRight className="w-4 h-4 text-slate-300 group-hover:translate-x-1 group-hover:text-primary-dark transition-all" />
+                        <MoveRight className="w-4 h-4 text-slate-300 group-hover:translate-x-1 group-hover:text-primary-dark transition-all" />
                      </div>
                   </div>
                </Link>

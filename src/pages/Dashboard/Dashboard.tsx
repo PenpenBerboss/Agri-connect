@@ -12,21 +12,25 @@ import {
 } from 'recharts';
 import { 
   Plus, 
-  Package, 
-  Eye, 
-  TrendingUp, 
-  DollarSign, 
-  Settings, 
+  Boxes, 
+  ScanEye, 
+  Zap, 
+  HandCoins, 
+  Settings2, 
   LogOut,
-  Bell,
+  BellRing,
   Search,
-  ChevronRight,
-  MapPin,
-  Calendar
+  MoveRight,
+  LocateFixed,
+  CalendarDays,
+  MessageSquare,
+  Star,
+  BarChart3,
+  X
 } from 'lucide-react';
-import { useStore } from '../../store/useStore';
-import { MOCK_STATS, MOCK_PRODUCTS } from '../../data/mockData';
-import { formatPrice, cn } from '../../lib/utils';
+import { useStore } from '../../application/store/useStore';
+import { MOCK_STATS, MOCK_PRODUCTS } from '../../services/mock/mockData';
+import { formatPrice, cn } from '../../shared/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { CatalogueTab } from './CatalogueTab';
 import { TransactionsTab } from './TransactionsTab';
@@ -35,15 +39,49 @@ import { ReportsTab } from './ReportsTab';
 type TabType = 'overview' | 'catalogue' | 'transactions' | 'reports' | 'settings';
 
 export const Dashboard = () => {
-  const { user, logout } = useStore();
+  const { user, logout, addProduct, products } = useStore();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
-  const userProducts = MOCK_PRODUCTS.filter(p => p.sellerId === user?.id);
+  const [showAddProduct, setShowAddProduct] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    
+    const newProduct = {
+      id: Math.random().toString(36).substr(2, 9),
+      name: formData.get('name') as string,
+      category: formData.get('category') as string,
+      price: Number(formData.get('price')),
+      unit: formData.get('unit') as string,
+      location: formData.get('location') as string,
+      description: formData.get('description') as string,
+      sellerId: user?.id || '1',
+      sellerName: user?.name || 'Vendeur',
+      images: ['https://images.unsplash.com/photo-1595111028886-df9b824d395a?w=800&q=80'], // Fallback image
+      stock: 100,
+      rating: 5,
+      reviews: 0,
+      views: 0,
+      tags: ['Nouveau']
+    };
+
+    addProduct(newProduct as any);
+    setShowAddProduct(false);
+    setActiveTab('catalogue');
+  };
+
+  const userProducts = products.filter(p => p.sellerId === user?.id);
+
+  const totalViews = userProducts.reduce((sum, p) => sum + (p.views || 0), 0);
+  const avgRating = userProducts.length > 0 
+    ? (userProducts.reduce((sum, p) => sum + p.rating, 0) / userProducts.length).toFixed(1) 
+    : '0.0';
 
   const stats = [
-    { label: 'Ventes Mensuelles', value: '1.25M XAF', icon: <DollarSign />, color: 'from-emerald-400 to-emerald-600', trend: '+12%' },
-    { label: 'Portée Totale', value: '4.89K', icon: <Eye />, color: 'from-blue-400 to-blue-600', trend: '+5%' },
-    { label: 'Stock Actif', value: userProducts.length.toString(), icon: <Package />, color: 'from-amber-400 to-amber-600', trend: '-2%' },
-    { label: 'Performance', value: '94%', icon: <TrendingUp />, color: 'from-rose-400 to-rose-600', trend: '+8%' },
+    { label: 'Nombre Produits', value: userProducts.length.toString(), icon: <Boxes />, color: 'from-amber-400 to-amber-600', trend: '+2' },
+    { label: 'Vues Totales', value: totalViews >= 1000 ? `${(totalViews/1000).toFixed(1)}K` : totalViews.toString(), icon: <ScanEye />, color: 'from-blue-400 to-blue-600', trend: '+15%' },
+    { label: 'Contacts Reçus', value: '24', icon: <MessageSquare />, color: 'from-emerald-400 to-emerald-600', trend: '+5' },
+    { label: 'Note Moyenne', value: `${avgRating}/5`, icon: <Star />, color: 'from-rose-400 to-rose-600', trend: 'stable' },
   ];
 
   const renderContent = () => {
@@ -125,7 +163,7 @@ export const Dashboard = () => {
                <div className="bg-white p-10 rounded-[3rem] border border-slate-200 shadow-xl shadow-slate-200/50 flex flex-col h-full">
                   <div className="flex items-center justify-between mb-10">
                      <h2 className="text-xl font-black text-slate-900 tracking-tight">Top Stocks</h2>
-                     <div className="p-3 bg-slate-50 rounded-2xl"><Package className="w-5 h-5 text-slate-400" /></div>
+                     <div className="p-3 bg-slate-50 rounded-2xl"><Boxes className="w-5 h-5 text-slate-400" /></div>
                   </div>
                   <div className="space-y-6 flex-1">
                      {userProducts.slice(0, 5).map((p) => (
@@ -166,7 +204,7 @@ export const Dashboard = () => {
         return (
           <div className="bg-white rounded-[3rem] p-24 text-center border border-slate-200 shadow-sleek">
             <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-8">
-              <Calendar className="w-10 h-10 text-slate-300" />
+              <CalendarDays className="w-10 h-10 text-slate-300" />
             </div>
             <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-3">Bientôt disponible</h2>
             <p className="text-slate-500 font-medium max-w-sm mx-auto leading-relaxed">
@@ -183,7 +221,7 @@ export const Dashboard = () => {
       <aside className="hidden lg:flex flex-col w-80 bg-slate-950 text-slate-400 p-8 border-r border-slate-900 sticky top-0 h-screen">
         <div className="flex items-center space-x-4 mb-16 px-2">
            <div className="w-12 h-12 bg-primary-dark rounded-[1.25rem] flex items-center justify-center text-white shadow-lg shadow-primary-dark/20 rotate-6">
-              <TrendingUp className="w-6 h-6" />
+              <Zap className="w-6 h-6" />
            </div>
            <div className="flex flex-col -space-y-1">
               <span className="font-black text-2xl tracking-tighter text-white">AgriPanel</span>
@@ -193,11 +231,11 @@ export const Dashboard = () => {
 
         <nav className="space-y-2 flex-1">
           {[
-            { id: 'overview', label: 'Dashboard', icon: <TrendingUp className="w-5 h-5" /> },
-            { id: 'catalogue', label: 'Catalogue', icon: <Package className="w-5 h-5" /> },
-            { id: 'transactions', label: 'Transactions', icon: <DollarSign className="w-5 h-5" /> },
-            { id: 'reports', label: 'Rapports', icon: <BarChart className="w-5 h-5" /> },
-            { id: 'settings', label: 'Configuration', icon: <Settings className="w-5 h-5" /> },
+            { id: 'overview', label: 'Dashboard', icon: <Zap className="w-5 h-5" /> },
+            { id: 'catalogue', label: 'Catalogue', icon: <Boxes className="w-5 h-5" /> },
+            { id: 'transactions', label: 'Transactions', icon: <HandCoins className="w-5 h-5" /> },
+            { id: 'reports', label: 'Rapports', icon: <BarChart3 className="w-5 h-5" /> },
+            { id: 'settings', label: 'Configuration', icon: <Settings2 className="w-5 h-5" /> },
           ].map((item) => (
              <button 
               key={item.id} 
@@ -214,14 +252,7 @@ export const Dashboard = () => {
           ))}
         </nav>
 
-        <div className="mt-auto space-y-6">
-          <div className="bg-slate-900/50 rounded-3xl p-6 border border-slate-900">
-             <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-3">Statut Serveur</p>
-             <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
-                <span className="text-xs font-bold text-emerald-500">Operationel • Douala</span>
-             </div>
-          </div>
+        <div className="mt-auto">
           <button 
             onClick={logout}
             className="w-full flex items-center space-x-4 px-5 py-4 rounded-2xl text-[13px] font-black uppercase tracking-widest text-rose-500 hover:bg-rose-500/10 transition-all border border-transparent hover:border-rose-500/20"
@@ -249,9 +280,21 @@ export const Dashboard = () => {
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                   <input placeholder="Rechercher..." className="w-full bg-white border border-slate-200 rounded-2xl py-3 pl-11 pr-4 text-xs font-bold focus:ring-4 focus:ring-primary-light/10 transition-all" />
                </div>
-               <button className="bg-primary-dark text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center space-x-3 shadow-2xl shadow-primary-dark/20 hover:scale-105 active:scale-95 transition-all">
+               <button 
+                  onClick={() => {
+                    if (activeTab === 'catalogue') setShowAddProduct(true);
+                    else if (activeTab === 'transactions') alert('Nouvelle transaction (Simulé)');
+                    else if (activeTab === 'reports') alert('Nouvelle exportation (Simulé)');
+                    else setShowAddProduct(true);
+                  }}
+                  className="bg-primary-dark text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center space-x-3 shadow-2xl shadow-primary-dark/20 hover:scale-105 active:scale-95 transition-all whitespace-nowrap"
+                >
                   <Plus className="w-5 h-5" />
-                  <span>Nouveau</span>
+                  <span>
+                    {activeTab === 'catalogue' ? 'Nouveau Produit' : 
+                     activeTab === 'transactions' ? 'Nouvelle Vente' : 
+                     activeTab === 'reports' ? 'Export Rapport' : 'Nouveau'}
+                  </span>
                </button>
             </div>
          </div>
@@ -268,6 +311,88 @@ export const Dashboard = () => {
            </motion.div>
          </AnimatePresence>
       </main>
+
+      {/* Add Product Modal */}
+      <AnimatePresence>
+        {showAddProduct && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowAddProduct(false)}
+              className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
+            />
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative w-full max-w-2xl bg-white rounded-[3rem] shadow-2xl overflow-y-auto max-h-[90vh] my-auto"
+            >
+              <div className="p-10 shrink-0">
+                <div className="flex justify-between items-start mb-8">
+                   <div>
+                     <h2 className="text-3xl font-black text-slate-900 tracking-tight">Nouveau Produit</h2>
+                     <p className="text-slate-500 font-medium">Remplissez les détails pour publier sur le marché.</p>
+                   </div>
+                   <button onClick={() => setShowAddProduct(false)} className="p-3 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-colors">
+                     <X className="w-6 h-6 text-slate-400" />
+                   </button>
+                </div>
+
+                <form className="space-y-6" onSubmit={handleSubmit}>
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Nom du produit</label>
+                        <input name="name" type="text" placeholder="ex: Maïs de l'Ouest" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold focus:ring-4 focus:ring-primary-light/10 transition-all outline-none" required />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Catégorie</label>
+                        <select name="category" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold focus:ring-4 focus:ring-primary-light/10 transition-all outline-none appearance-none cursor-pointer">
+                           <option>Céréales</option>
+                           <option>Tubercules</option>
+                           <option>Fruits</option>
+                           <option>Légumes</option>
+                        </select>
+                      </div>
+                   </div>
+
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Prix (XAF)</label>
+                        <input name="price" type="number" placeholder="2500" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold focus:ring-4 focus:ring-primary-light/10 transition-all outline-none" required />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Unité</label>
+                        <input name="unit" type="text" placeholder="kg, sac, régime" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold focus:ring-4 focus:ring-primary-light/10 transition-all outline-none" required />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Ville</label>
+                        <input name="location" type="text" placeholder="Bafoussam" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold focus:ring-4 focus:ring-primary-light/10 transition-all outline-none" required />
+                      </div>
+                   </div>
+
+                   <div className="space-y-2">
+                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Description</label>
+                     <textarea name="description" placeholder="Décrivez la qualité, l'origine et la disponibilité..." className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold focus:ring-4 focus:ring-primary-light/10 transition-all outline-none min-h-[120px]" required></textarea>
+                   </div>
+
+                   <div className="p-8 border-2 border-dashed border-slate-100 rounded-3xl text-center hover:border-primary-light transition-all group cursor-pointer">
+                      <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-primary-light/10 transition-all">
+                        <Plus className="w-6 h-6 text-slate-300 group-hover:text-primary-dark" />
+                      </div>
+                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Ajouter des photos</p>
+                   </div>
+
+                   <button type="submit" className="w-full bg-primary-dark text-white py-5 rounded-2xl font-black text-sm uppercase tracking-widest shadow-2xl shadow-primary-dark/20 hover:bg-black transition-all">
+                      Publier Maintenant
+                   </button>
+                </form>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

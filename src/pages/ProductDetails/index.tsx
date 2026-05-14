@@ -9,16 +9,18 @@ import {
   Phone, 
   ShieldCheck, 
   ChevronLeft,
-  ArrowRight,
+  MoveRight,
   Info,
-  ShoppingCart
+  ShoppingCart,
+  X
 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { MOCK_PRODUCTS } from '../../data/mockData';
-import { formatPrice, cn } from '../../lib/utils';
-import { useStore } from '../../store/useStore';
-import { motion } from 'motion/react';
+import { MOCK_PRODUCTS } from '../../services/mock/mockData';
+import { formatPrice, cn } from '../../shared/utils';
+import { useStore } from '../../application/store/useStore';
+import { motion, AnimatePresence } from 'motion/react';
+import { RecommendationService } from '../../core/services/recommendationService';
 
 // Fix Leaflet icon issue
 import L from 'leaflet';
@@ -37,14 +39,33 @@ L.Marker.prototype.options.icon = DefaultIcon;
 export const ProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user, toggleFavorite, isFavorite, addToCart } = useStore();
   const product = MOCK_PRODUCTS.find(p => p.id === id);
-  const { toggleFavorite, isFavorite, addToCart } = useStore();
+  
+  const similarProducts = product ? RecommendationService.getRecommendedProducts(4, user?.id, product) : [];
+  const nearbyProducts = product ? RecommendationService.getNearbyProducts(product.location.lat, product.location.lng, 4).filter(p => p.id !== product.id) : [];
+
   const [activeImage, setActiveImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    // Simulation de géolocalisation pour le calcul hybride (Douala par défaut)
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+        },
+        () => setUserLocation({ lat: 4.05, lng: 9.71 }) // Fallback Douala
+      );
+    }
   }, [id]);
+
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
 
   if (!product) {
     return (
@@ -200,10 +221,11 @@ export const ProductDetails = () => {
                     <span>WhatsApp</span>
                   </button>
                   <button 
+                    onClick={() => setIsContactModalOpen(true)}
                     className="w-full bg-slate-950 hover:bg-primary-dark text-white py-5 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl shadow-slate-950/20 hover:scale-105 transition-all"
                   >
-                    <Phone className="w-6 h-6" />
-                    <span>Appeler</span>
+                    <MessageCircle className="w-6 h-6" />
+                    <span>Contacter</span>
                   </button>
                </div>
              </div>
@@ -239,7 +261,7 @@ export const ProductDetails = () => {
                   <p className="text-[10px] text-primary-light font-bold uppercase tracking-[0.2em]">Producteur Master Class • 120+ Ventes</p>
                </div>
                <Link to={`/seller/${product.sellerId}`} className="bg-white/10 hover:bg-white/20 text-white w-12 h-12 rounded-2xl flex items-center justify-center transition-all">
-                  <ArrowRight className="w-5 h-5" />
+                  <MoveRight className="w-5 h-5" />
                </Link>
             </div>
           </div>
@@ -279,41 +301,204 @@ export const ProductDetails = () => {
            </div>
         </section>
 
-        {/* Recommendations */}
+        {/* Similar Products */}
         <section className="mt-32">
            <div className="flex items-end justify-between mb-12">
               <div>
-                <h2 className="text-4xl font-black text-slate-900 tracking-tighter">Exploration Similaire</h2>
-                <p className="text-slate-500 font-medium mt-2">D'autres pépites {product.category} sélectionnées pour vous.</p>
+                <h2 className="text-4xl font-black text-slate-900 tracking-tighter">Produits Similaires</h2>
+                <p className="text-slate-500 font-medium mt-2">Découvrez d'autres produits de la catégorie {product.category}.</p>
               </div>
-              <Link to="/products" className="group flex items-center bg-slate-900 text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-primary-dark transition-all">
-                Tout voir
-                <ArrowRight className="w-4 h-4 ml-3 group-hover:translate-x-1 transition-transform" />
-              </Link>
            </div>
            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {MOCK_PRODUCTS.filter(p => p.id !== id && p.category === product.category).slice(0, 4).map(p => (
-                <Link 
-                  key={p.id} 
-                  to={`/products/${p.id}`}
-                  className="bg-white rounded-[2rem] p-6 hover:shadow-2xl hover:border-primary-light border border-slate-200 transition-all group flex flex-col"
-                >
-                  <div className="overflow-hidden rounded-2xl aspect-square mb-6">
-                    <img src={p.images[0]} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={p.name} />
-                  </div>
-                  <h4 className="font-extrabold text-slate-900 group-hover:text-primary-dark transition-colors truncate tracking-tight">{p.name}</h4>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1.5">{p.location.city}</p>
-                  <div className="mt-6 flex items-center justify-between border-t border-slate-50 pt-6">
-                     <span className="text-lg font-black text-primary-dark tracking-tighter">{formatPrice(p.price)}</span>
-                     <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-primary-dark group-hover:text-white transition-all">
-                        <ArrowRight className="w-4 h-4" />
-                     </div>
-                  </div>
-                </Link>
+              {similarProducts.map(p => (
+                <ProductSmallCard key={p.id} p={p} />
               ))}
            </div>
         </section>
+
+        {/* Nearby Products */}
+        <section className="mt-32">
+           <div className="flex items-end justify-between mb-12">
+              <div>
+                <h2 className="text-4xl font-black text-slate-900 tracking-tighter">Également à {product.location.city}</h2>
+                <p className="text-slate-500 font-medium mt-2">Profitez de votre déplacement pour récupérer d'autres récoltes.</p>
+              </div>
+           </div>
+           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {nearbyProducts.map(p => (
+                <ProductSmallCard key={p.id} p={p} />
+              ))}
+           </div>
+        </section>
+
+        {/* Reviews Section */}
+        <section className="mt-32">
+           <div className="flex flex-col items-center text-center mb-16">
+              <h2 className="text-4xl font-black text-slate-900 tracking-tighter">Avis de la Communauté</h2>
+              <div className="flex items-center mt-4 bg-white px-6 py-2 rounded-full border border-slate-200 shadow-sm">
+                <div className="flex items-center text-accent mr-3">
+                  {[1,2,3,4,5].map(i => (
+                    <Star key={i} className={cn("w-5 h-5", i <= Math.round(product.rating) ? "fill-current" : "text-slate-200")} />
+                  ))}
+                </div>
+                <span className="font-black text-slate-900">{product.rating}/5</span>
+                <span className="ml-2 text-slate-400 font-bold text-sm">({product.reviewsCount} retours)</span>
+              </div>
+           </div>
+
+           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+              <div className="lg:col-span-1 space-y-8">
+                 <div className="bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-xl">
+                    <h3 className="font-black text-xl mb-6">Laisser un avis</h3>
+                    <div className="space-y-6">
+                       <div>
+                         <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Votre note</p>
+                         <div className="flex gap-2">
+                           {[1,2,3,4,5].map(i => (
+                             <button key={i} className="w-10 h-10 rounded-xl bg-slate-50 hover:bg-primary-light/10 text-slate-200 hover:text-accent transition-all flex items-center justify-center">
+                               <Star className="w-6 h-6" />
+                             </button>
+                           ))}
+                         </div>
+                       </div>
+                       <div>
+                         <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Commentaire</p>
+                         <textarea 
+                           placeholder="Partagez votre expérience avec ce produit..."
+                           className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-medium focus:ring-4 focus:ring-primary-light/10 transition-all outline-none min-h-[120px]"
+                         ></textarea>
+                       </div>
+                       <button className="w-full bg-primary-dark text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg shadow-primary-dark/20 active:scale-95 transition-all">
+                         Publier l'avis
+                       </button>
+                    </div>
+                 </div>
+              </div>
+
+              <div className="lg:col-span-2 space-y-6">
+                 {[1, 2].map((review) => (
+                   <div key={review} className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex justify-between items-start mb-6">
+                         <div className="flex items-center gap-4">
+                            <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=User${review}`} className="w-12 h-12 rounded-2xl bg-slate-100" alt="avatar" />
+                            <div>
+                               <h5 className="font-black text-slate-900">Utilisateur Verified</h5>
+                               <p className="text-[10px] text-slate-400 font-bold uppercase">Il y a 2 jours</p>
+                            </div>
+                         </div>
+                         <div className="flex text-accent">
+                            {[1,2,3,4,5].map(i => (
+                              <Star key={i} className={cn("w-3.5 h-3.5", i <= 4 ? "fill-current" : "text-slate-100")} />
+                            ))}
+                         </div>
+                      </div>
+                      <p className="text-slate-600 font-medium leading-relaxed">
+                        Produit d'excellente qualité ! {product.name} est frais et correspond parfaitement à la description. Livraison rapide à {product.location.city}.
+                      </p>
+                   </div>
+                 ))}
+              </div>
+           </div>
+        </section>
+
+        {/* Contact Modal */}
+        <AnimatePresence>
+          {isContactModalOpen && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsContactModalOpen(false)}
+                className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
+              />
+              <motion.div 
+                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                className="relative w-full max-w-lg bg-white rounded-[3rem] shadow-2xl overflow-hidden"
+              >
+                <div className="p-10">
+                  <div className="flex justify-between items-start mb-8">
+                    <div>
+                      <h2 className="text-3xl font-black text-slate-900 tracking-tight">Contacter le Vendeur</h2>
+                      <p className="text-slate-400 font-medium">Envoyez un message direct à {product.sellerName}.</p>
+                    </div>
+                    <button onClick={() => setIsContactModalOpen(false)} className="p-3 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-colors">
+                      <X className="w-6 h-6" />
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 mb-8">
+                    <a 
+                      href={`tel:+237670000000`}
+                      className="flex flex-col items-center gap-3 p-6 bg-slate-50 rounded-3xl border border-slate-100 hover:border-primary-light hover:bg-white transition-all group"
+                    >
+                      <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm group-hover:bg-primary-dark group-hover:text-white transition-all">
+                        <Phone className="w-6 h-6" />
+                      </div>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-slate-600">Appeler</span>
+                    </a>
+                    <button 
+                      onClick={handleWhatsApp}
+                      className="flex flex-col items-center gap-3 p-6 bg-slate-50 rounded-3xl border border-slate-100 hover:border-[#25D366] hover:bg-white transition-all group"
+                    >
+                      <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm group-hover:bg-[#25D366] group-hover:text-white transition-all">
+                        <MessageCircle className="w-6 h-6" />
+                      </div>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-slate-600">WhatsApp</span>
+                    </button>
+                  </div>
+
+                  <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); setIsContactModalOpen(false); }}>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Sujet</label>
+                      <input 
+                        type="text" 
+                        defaultValue={`Intérêt pour ${product.name}`}
+                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold focus:ring-4 focus:ring-primary-light/10 transition-all outline-none" 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Message</label>
+                      <textarea 
+                        placeholder="Quelles sont vos questions ?" 
+                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold focus:ring-4 focus:ring-primary-light/10 transition-all outline-none min-h-[120px]"
+                        required
+                      ></textarea>
+                    </div>
+                    <button type="submit" className="w-full bg-primary-dark text-white py-5 rounded-2xl font-black text-sm uppercase tracking-widest shadow-2xl shadow-primary-dark/20 hover:bg-black transition-all">
+                      Envoyer le message
+                    </button>
+                  </form>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
 };
+
+const ProductSmallCard = ({ p }: { p: any }) => (
+  <Link 
+    to={`/products/${p.id}`}
+    className="bg-white rounded-[2rem] p-6 hover:shadow-2xl hover:border-primary-light border border-slate-200 transition-all group flex flex-col"
+  >
+    <div className="overflow-hidden rounded-2xl aspect-square mb-6">
+      <img src={p.images[0]} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={p.name} />
+    </div>
+    <div className="flex items-center gap-1.5 mb-1">
+      <MapPin className="w-3 h-3 text-slate-300" />
+      <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{p.location.city}</span>
+    </div>
+    <h4 className="font-extrabold text-slate-900 group-hover:text-primary-dark transition-colors truncate tracking-tight">{p.name}</h4>
+    <div className="mt-6 flex items-center justify-between gap-4 border-t border-slate-50 pt-6">
+       <span className="text-lg font-black text-primary-dark tracking-tighter truncate min-w-0">{formatPrice(p.price)}</span>
+       <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-primary-dark group-hover:text-white shrink-0 transition-all">
+          <MoveRight className="w-4 h-4" />
+       </div>
+    </div>
+  </Link>
+);

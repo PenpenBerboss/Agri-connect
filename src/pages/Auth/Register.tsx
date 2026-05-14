@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { Mail, Lock, User, Phone, Leaf, ArrowRight, UserPlus, ShieldCheck } from 'lucide-react';
-import { useStore } from '../../store/useStore';
+import { Mail, Lock, User, Phone, Leaf, MoveRight, UserPlus, ShieldCheck } from 'lucide-react';
+import { useStore } from '../../application/store/useStore';
 import { motion } from 'motion/react';
-import { cn } from '../../lib/utils';
+import { cn } from '../../shared/utils';
 
 export const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -124,7 +124,7 @@ export const Register = () => {
             {isLoading ? (
               <span className="flex items-center"><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-3" /> Initialisation...</span>
             ) : (
-              <span className="flex items-center">Activer mon Accès <ArrowRight className="ml-4 w-5 h-5 group-hover:translate-x-1 transition-transform" /></span>
+              <span className="flex items-center">Activer mon Accès <MoveRight className="ml-4 w-5 h-5 group-hover:translate-x-1 transition-transform" /></span>
             )}
           </button>
         </form>

@@ -1,10 +1,13 @@
 import React from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
 import { motion } from 'motion/react';
 
 export const MainLayout = () => {
+  const location = useLocation();
+  const isHomePage = location.pathname === '/';
+
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
@@ -17,7 +20,7 @@ export const MainLayout = () => {
           <Outlet />
         </motion.div>
       </main>
-      <Footer />
+      {isHomePage && <Footer />}
     </div>
   );
 };

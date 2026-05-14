@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
-  Menu, 
+  AlignRight, 
   X, 
   Search, 
   User as UserIcon, 
   Heart, 
-  ShoppingCart, 
+  ShoppingBag, 
   Leaf,
   LogOut,
-  LayoutDashboard
+  LayoutGrid
 } from 'lucide-react';
-import { useStore } from '../../store/useStore';
-import { cn } from '../../lib/utils';
+import { useStore } from '../../application/store/useStore';
+import { cn } from '../../shared/utils';
 import { motion, AnimatePresence } from 'motion/react';
 
 export const Navbar = () => {
@@ -62,28 +62,32 @@ export const Navbar = () => {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center space-x-5">
-            <Link to="/products" className="text-slate-600 hover:text-primary-dark font-semibold text-sm">Marketplace</Link>
-            <Link to="/map" className="text-slate-600 hover:text-primary-dark font-semibold text-sm">Carte</Link>
-            
-            <div className="h-8 w-px bg-slate-200 mx-2" />
+            {user?.role !== 'farmer' && (
+              <>
+                <Link to="/products" className="text-slate-600 hover:text-primary-dark font-semibold text-sm">Marketplace</Link>
+                <Link to="/map" className="text-slate-600 hover:text-primary-dark font-semibold text-sm">Carte</Link>
+                
+                <div className="h-8 w-px bg-slate-200 mx-2" />
 
-            <Link to="/favorites" className="relative text-slate-500 hover:text-primary-dark transition-colors">
-              <Heart className="w-6 h-6" />
-              {favorites.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-accent text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white">
-                  {favorites.length}
-                </span>
-              )}
-            </Link>
+                <Link to="/favorites" className="relative text-slate-500 hover:text-primary-dark transition-colors">
+                  <Heart className="w-6 h-6" />
+                  {favorites.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-accent text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white">
+                      {favorites.length}
+                    </span>
+                  )}
+                </Link>
 
-            <Link to="/cart" className="relative text-slate-500 hover:text-primary-dark transition-colors">
-              <ShoppingCart className="w-6 h-6" />
-              {cart.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-primary-dark text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white">
-                  {cart.reduce((sum, item) => sum + item.quantity, 0)}
-                </span>
-              )}
-            </Link>
+                <Link to="/cart" className="relative text-slate-500 hover:text-primary-dark transition-colors">
+                  <ShoppingBag className="w-6 h-6" />
+                  {cart.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-primary-dark text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white">
+                      {cart.reduce((sum, item) => sum + item.quantity, 0)}
+                    </span>
+                  )}
+                </Link>
+              </>
+            )}
             
             {isAuthenticated ? (
               <div className="flex items-center gap-3 pl-4 border-l border-slate-200 group cursor-pointer" onClick={() => navigate('/dashboard')}>
@@ -116,7 +120,7 @@ export const Navbar = () => {
               )}
             </Link>
             <button onClick={() => setIsOpen(!isOpen)} className="text-gray-600">
-              {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {isOpen ? <X className="w-6 h-6" /> : <AlignRight className="w-6 h-6" />}
             </button>
           </div>
         </div>
@@ -146,8 +150,12 @@ export const Navbar = () => {
               </form>
               <div className="flex flex-col space-y-3">
                 <Link to="/" onClick={() => setIsOpen(false)} className="text-gray-700 font-medium">Accueil</Link>
-                <Link to="/products" onClick={() => setIsOpen(false)} className="text-gray-700 font-medium">Tous les produits</Link>
-                <Link to="/map" onClick={() => setIsOpen(false)} className="text-gray-700 font-medium">Carte interactive</Link>
+                {user?.role !== 'farmer' && (
+                  <>
+                    <Link to="/products" onClick={() => setIsOpen(false)} className="text-gray-700 font-medium">Tous les produits</Link>
+                    <Link to="/map" onClick={() => setIsOpen(false)} className="text-gray-700 font-medium">Carte interactive</Link>
+                  </>
+                )}
                 {isAuthenticated ? (
                   <>
                     <Link to="/dashboard" onClick={() => setIsOpen(false)} className="text-primary-dark font-bold">Mon Dashboard</Link>

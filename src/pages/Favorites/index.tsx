@@ -1,9 +1,9 @@
 import React from 'react';
-import { useStore } from '../../store/useStore';
-import { MOCK_PRODUCTS } from '../../data/mockData';
+import { useStore } from '../../application/store/useStore';
+import { MOCK_PRODUCTS } from '../../services/mock/mockData';
 import { Link } from 'react-router-dom';
-import { Heart, Trash2, ShoppingCart, ArrowRight, PackageX } from 'lucide-react';
-import { formatPrice } from '../../lib/utils';
+import { Heart, Trash2, ShoppingCart, MoveRight, PackageX } from 'lucide-react';
+import { formatPrice } from '../../shared/utils';
 import { motion } from 'motion/react';
 
 export const Favorites = () => {
@@ -47,7 +47,7 @@ export const Favorites = () => {
               to="/products" 
               className="bg-slate-950 text-white px-12 py-5 rounded-2xl font-black text-sm uppercase tracking-[0.2em] flex items-center shadow-2xl shadow-slate-950/20 hover:scale-105 active:scale-95 transition-all"
             >
-              Découvrir le marché <ArrowRight className="ml-4 w-5 h-5 transition-transform group-hover:translate-x-1" />
+              Découvrir le marché <MoveRight className="ml-4 w-5 h-5 transition-transform group-hover:translate-x-1" />
             </Link>
           </motion.div>
         ) : (

@@ -1,24 +1,40 @@
-import React from 'react';
-import { Package, Plus, Search, Edit3, Trash2, Eye } from 'lucide-react';
-import { MOCK_PRODUCTS } from '../../data/mockData';
-import { formatPrice, cn } from '../../lib/utils';
-import { useStore } from '../../store/useStore';
+import React, { useState } from 'react';
+import { Boxes, Plus, Search, SquarePen, Trash2, ScanEye } from 'lucide-react';
+import { MOCK_PRODUCTS } from '../../services/mock/mockData';
+import { formatPrice, cn } from '../../shared/utils';
+import { useStore } from '../../application/store/useStore';
 
 export const CatalogueTab = () => {
-  const { user } = useStore();
-  const userProducts = MOCK_PRODUCTS.filter(p => p.sellerId === user?.id);
+  const { user, products, deleteProduct } = useStore();
+  const [search, setSearch] = useState('');
+  
+  const userProducts = products.filter(p => 
+    p.sellerId === user?.id && 
+    (p.name.toLowerCase().includes(search.toLowerCase()) || p.category.toLowerCase().includes(search.toLowerCase()))
+  );
+
+  const handleDelete = (id: string, name: string) => {
+    if (window.confirm(`Voulez-vous vraiment supprimer "${name}" ?`)) {
+      deleteProduct(id);
+    }
+  };
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-between items-center bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sleek">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sleek">
         <div>
           <h2 className="text-2xl font-black text-slate-900 tracking-tight">Mon Catalogue</h2>
           <p className="text-slate-500 font-medium text-sm">Gérez vos produits et stocks en temps réel.</p>
         </div>
-        <button className="bg-primary-dark text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center space-x-3 shadow-2xl shadow-primary-dark/20 hover:scale-105 transition-all">
-          <Plus className="w-5 h-5" />
-          <span>Ajouter un Produit</span>
-        </button>
+        <div className="relative w-full md:w-64">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-440 w-4 h-4" />
+          <input 
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Filtrer mes produits..." 
+            className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 pl-11 pr-4 text-xs font-bold focus:ring-4 focus:ring-primary-light/10 transition-all outline-none" 
+          />
+        </div>
       </div>
 
       <div className="bg-white rounded-[3rem] border border-slate-200 shadow-sleek overflow-hidden">
@@ -80,9 +96,12 @@ export const CatalogueTab = () => {
                   <td className="px-8 py-6">
                     <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button className="p-2.5 bg-white border border-slate-100 rounded-xl text-slate-400 hover:text-primary-dark hover:bg-slate-50 transition-all shadow-sm">
-                        <Edit3 className="w-4 h-4" />
+                        <SquarePen className="w-4 h-4" />
                       </button>
-                      <button className="p-2.5 bg-white border border-slate-100 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-slate-50 transition-all shadow-sm">
+                      <button 
+                        onClick={() => handleDelete(p.id, p.name)}
+                        className="p-2.5 bg-white border border-slate-100 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-slate-50 transition-all shadow-sm"
+                      >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>

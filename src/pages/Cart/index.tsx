@@ -1,9 +1,9 @@
 import React from 'react';
-import { useStore } from '../../store/useStore';
-import { MOCK_PRODUCTS } from '../../data/mockData';
+import { useStore } from '../../application/store/useStore';
+import { MOCK_PRODUCTS } from '../../services/mock/mockData';
 import { Link, useNavigate } from 'react-router-dom';
-import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, ShieldCheck } from 'lucide-react';
-import { formatPrice, cn } from '../../lib/utils';
+import { Trash2, Plus, Minus, ShoppingBag, MoveRight, ShieldCheck } from 'lucide-react';
+import { formatPrice, cn } from '../../shared/utils';
 import { motion } from 'motion/react';
 
 export const Cart = () => {
@@ -33,7 +33,7 @@ export const Cart = () => {
           <h2 className="text-4xl font-black text-slate-900 mb-4 tracking-tighter">Votre panier est vide</h2>
           <p className="text-slate-500 font-medium mb-12 text-lg">Il semble que vous n'ayez pas encore ajouté de produits à votre sélection.</p>
           <Link to="/products" className="bg-primary-dark text-white px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-widest inline-flex items-center shadow-2xl shadow-primary-dark/20 hover:scale-105 active:scale-95 transition-all">
-            Explorer les produits <ArrowRight className="ml-3 w-5 h-5" />
+            Explorer les produits <MoveRight className="ml-3 w-5 h-5" />
           </Link>
         </motion.div>
       </div>

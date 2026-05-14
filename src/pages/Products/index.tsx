@@ -2,28 +2,30 @@ import React, { useState, useMemo } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { 
   Search, 
-  SlidersHorizontal, 
-  MapPin, 
+  Settings2, 
+  LocateFixed, 
   Star, 
   ChevronDown,
-  LayoutGrid,
-  List as ListIcon,
-  X,
-  ArrowRight,
+  Grid2X2,
+  Rows2,
+  CircleX,
+  MoveRight,
   Heart
 } from 'lucide-react';
-import { MOCK_PRODUCTS, CATEGORIES } from '../../data/mockData';
-import { formatPrice, cn } from '../../lib/utils';
-import { Category } from '../../types';
+import { MOCK_PRODUCTS, CATEGORIES, CAMEROON_CITIES } from '../../services/mock/mockData';
+import { formatPrice, cn } from '../../shared/utils';
+import { Category } from '../../core/types';
 import { motion, AnimatePresence } from 'motion/react';
-import { useStore } from '../../store/useStore';
+import { useStore } from '../../application/store/useStore';
 
 export const Products = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const query = searchParams.get('q') || '';
   const categoryParam = searchParams.get('category') || '';
+  const cityParam = searchParams.get('city') || '';
   
   const [selectedCategory, setSelectedCategory] = useState<Category | 'all'>((categoryParam as any) || 'all');
+  const [selectedCity, setSelectedCity] = useState<string>(cityParam || 'all');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000]);
   const [sortBy, setSortBy] = useState<'newest' | 'price-asc' | 'price-desc' | 'popular'>('newest');
   const [showFilters, setShowFilters] = useState(false);
@@ -34,9 +36,10 @@ export const Products = () => {
       const matchesSearch = p.name.toLowerCase().includes(query.toLowerCase()) || 
                            p.description.toLowerCase().includes(query.toLowerCase());
       const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
+      const matchesCity = selectedCity === 'all' || p.location.city === selectedCity;
       const matchesPrice = p.price >= priceRange[0] && p.price <= priceRange[1];
       
-      return matchesSearch && matchesCategory && matchesPrice;
+      return matchesSearch && matchesCategory && matchesCity && matchesPrice;
     }).sort((a, b) => {
       if (sortBy === 'price-asc') return a.price - b.price;
       if (sortBy === 'price-desc') return b.price - a.price;
@@ -52,7 +55,7 @@ export const Products = () => {
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-8">
           <div className="space-y-2">
             <div className="inline-flex items-center space-x-2 bg-primary-dark/5 px-3 py-1 rounded-full text-primary-dark text-[10px] font-bold uppercase tracking-widest">
-              <LayoutGrid className="w-3 h-3" />
+              <Grid2X2 className="w-3 h-3" />
               <span>Cameroun Marketplace</span>
             </div>
             <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">Le Marché Agricole</h1>
@@ -64,7 +67,7 @@ export const Products = () => {
               onClick={() => setShowFilters(!showFilters)}
               className="flex items-center space-x-2 bg-white border border-slate-200 px-5 py-3 rounded-2xl shadow-sm hover:border-primary-light md:hidden text-slate-800 transition-all font-bold text-sm"
             >
-              <SlidersHorizontal className="w-4 h-4" />
+              <Settings2 className="w-4 h-4" />
               <span>Filtres</span>
             </button>
             <div className="relative group min-w-[200px]">
@@ -101,7 +104,7 @@ export const Products = () => {
                     )}
                   >
                     <span>Toutes</span>
-                    {selectedCategory !== 'all' && <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" />}
+                    {selectedCategory !== 'all' && <MoveRight className="w-3 h-3 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" />}
                   </button>
                   {CATEGORIES.map((cat) => (
                     <button 
@@ -113,9 +116,29 @@ export const Products = () => {
                       )}
                     >
                       <span className="flex items-center"><span className="mr-3">{cat.icon}</span> {cat.label}</span>
-                      {selectedCategory !== cat.value && <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" />}
+                      {selectedCategory !== cat.value && <MoveRight className="w-3 h-3 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" />}
                     </button>
                   ))}
+                </div>
+              </div>
+
+              {/* City Filter */}
+              <div>
+                <h3 className="font-extrabold text-slate-900 text-sm uppercase tracking-widest mb-6 flex items-center">
+                  Ville
+                </h3>
+                <div className="relative group">
+                  <select 
+                    value={selectedCity}
+                    onChange={(e) => setSelectedCity(e.target.value)}
+                    className="w-full appearance-none bg-slate-50 border border-slate-200 px-5 py-3 pr-12 rounded-2xl shadow-sm hover:border-primary-light focus:ring-4 focus:ring-primary-light/10 text-sm font-bold text-slate-800 cursor-pointer transition-all"
+                  >
+                    <option value="all">Filtre par ville (Tout)</option>
+                    {CAMEROON_CITIES.map(city => (
+                      <option key={city} value={city}>{city}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none group-focus-within:text-primary-dark" />
                 </div>
               </div>
 
@@ -207,7 +230,7 @@ export const Products = () => {
                                  <span className="text-slate-400 text-[10px] font-bold uppercase ml-1">({product.reviewsCount})</span>
                               </div>
                               <div className="flex items-center text-slate-400 font-bold text-[10px] uppercase tracking-wider">
-                                 <MapPin className="w-3 h-3 mr-1" />
+                                 <LocateFixed className="w-3 h-3 mr-1" />
                                  <span>{product.location.city}</span>
                               </div>
                            </div>
@@ -222,14 +245,14 @@ export const Products = () => {
                               {product.description}
                            </p>
 
-                           <div className="mt-auto pt-6 border-t border-slate-100 flex items-center justify-between">
-                              <div className="flex flex-col">
-                                 <span className="text-2xl font-black text-primary-dark leading-none tracking-tighter">{formatPrice(product.price)}</span>
+                           <div className="mt-auto pt-6 border-t border-slate-100 flex items-center justify-between gap-4">
+                              <div className="flex flex-col min-w-0">
+                                 <span className="text-xl md:text-2xl font-black text-primary-dark leading-none tracking-tighter truncate">{formatPrice(product.price)}</span>
                                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">/{product.unit}</span>
                               </div>
                               <Link 
                                to={`/products/${product.id}`}
-                               className="bg-slate-950 text-white text-[10px] font-black uppercase tracking-widest px-6 py-3 rounded-xl hover:bg-primary-dark shadow-lg shadow-slate-950/10 active:scale-95 transition-all"
+                               className="bg-slate-950 text-white text-[10px] font-black uppercase tracking-widest px-4 md:px-6 py-3 rounded-xl hover:bg-primary-dark shadow-lg shadow-slate-950/10 active:scale-95 shrink-0 transition-all"
                               >
                                 Explorer
                               </Link>
@@ -264,7 +287,7 @@ export const Products = () => {
               <div className="flex justify-between items-center mb-8">
                 <h2 className="text-xl font-bold">Filtres de recherche</h2>
                 <button onClick={() => setShowFilters(false)} className="p-2 bg-gray-100 rounded-full">
-                  <X className="w-5 h-5" />
+                  <CircleX className="w-5 h-5" />
                 </button>
               </div>
               

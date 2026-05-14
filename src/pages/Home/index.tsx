@@ -1,22 +1,31 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  ArrowRight, 
+  ArrowUpRight, 
   Search, 
-  Map as MapIcon, 
-  TrendingUp, 
-  Users, 
-  ShieldCheck,
-  Package
+  Globe, 
+  Zap, 
+  SquareUserRound, 
+  Fingerprint,
+  Boxes,
+  MapPin,
+  TrendingUp,
+  Sparkles
 } from 'lucide-react';
-import { CATEGORIES, MOCK_PRODUCTS } from '../../data/mockData';
+import { CATEGORIES } from '../../services/mock/mockData';
+import { RecommendationService } from '../../core/services/recommendationService';
 import { motion } from 'motion/react';
-import { formatPrice } from '../../lib/utils';
-import { useStore } from '../../store/useStore';
+import { formatPrice } from '../../shared/utils';
+import { useStore } from '../../application/store/useStore';
 
 export const Home = () => {
-  const { toggleFavorite, isFavorite } = useStore();
-  const popularProducts = MOCK_PRODUCTS.filter(p => p.isPopular);
+  const { user, toggleFavorite, isFavorite, products } = useStore();
+  
+  const personalRecs = RecommendationService.getPersonalRecommendations(user?.id || 'visitor', 4);
+  const trendingProducts = RecommendationService.getTrendingProducts(4);
+  const nearbyProducts = (user && user.location && typeof user.location === 'object')
+    ? RecommendationService.getNearbyProducts(user.location.lat, user.location.lng, 4)
+    : products.slice(10, 14);
 
   return (
     <div className="space-y-32 pb-32 bg-slate-50">
@@ -24,7 +33,7 @@ export const Home = () => {
       <section className="relative h-[92vh] flex items-center overflow-hidden">
         <div className="absolute inset-0 z-0 scale-105">
           <img 
-            src="https://images.unsplash.com/photo-1595113316349-9fa4ee24f884?q=80&w=2000&auto=format&fit=crop" 
+            src="/assets/back1.jpg" 
             alt="Agriculture Cameroun" 
             className="w-full h-full object-cover brightness-[0.4]"
           />
@@ -55,7 +64,7 @@ export const Home = () => {
                 className="bg-primary-dark hover:bg-white hover:text-slate-950 text-white px-12 py-5 rounded-[1.25rem] font-black text-sm uppercase tracking-widest flex items-center justify-center space-x-4 shadow-[0_20px_50px_rgba(76,175,80,0.3)] transition-all duration-500 active:scale-95 group"
               >
                 <span>Explorer le Marché</span>
-                <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                <ArrowUpRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
               </Link>
               <Link 
                 to="/register" 
@@ -76,10 +85,10 @@ export const Home = () => {
       <section className="max-w-7xl mx-auto px-6 -mt-24 relative z-20">
          <div className="grid grid-cols-2 md:grid-cols-4 gap-1 bg-white p-2 rounded-[3rem] shadow-[0_40px_100px_rgba(0,0,0,0.08)] overflow-hidden border border-slate-100">
             {[
-               { label: 'Producteurs', value: '15,000+', icon: <Users /> },
-               { label: 'Localités', value: '250+', icon: <MapIcon /> },
-               { label: 'Tonnage Mensuel', value: '1,200T', icon: <TrendingUp /> },
-               { label: 'Confiance', value: '99.9%', icon: <ShieldCheck /> }
+               { label: 'Producteurs', value: '15,000+', icon: <SquareUserRound /> },
+               { label: 'Localités', value: '250+', icon: <Globe /> },
+               { label: 'Tonnage Mensuel', value: '1,200T', icon: <Zap /> },
+               { label: 'Confiance', value: '99.9%', icon: <Fingerprint /> }
             ].map((stat, i) => (
                <div key={i} className="bg-slate-50/50 p-8 flex items-center space-x-6">
                   <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-slate-100 text-primary-dark">
@@ -103,7 +112,7 @@ export const Home = () => {
             <p className="text-slate-500 font-medium max-w-lg">La richesse de chaque région du Cameroun, sélectionnée pour sa qualité supérieure.</p>
           </div>
           <Link to="/products" className="bg-slate-950 text-white px-8 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-primary-dark transition-all flex items-center group">
-            Tout Explorer <ArrowRight className="ml-3 w-4 h-4 transition-transform group-hover:translate-x-1" />
+            Tout Explorer <ArrowUpRight className="ml-3 w-4 h-4 transition-transform group-hover:translate-x-1" />
           </Link>
         </div>
 
@@ -158,7 +167,7 @@ export const Home = () => {
                         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&q=80')] bg-cover opacity-40 brightness-50" />
                         <div className="absolute inset-0 flex items-center justify-center">
                             <div className="w-20 h-20 bg-primary-dark rounded-full flex items-center justify-center text-white shadow-3xl animate-bounce">
-                               <MapIcon size={32} />
+                               <Globe size={32} />
                             </div>
                         </div>
                      </div>
@@ -168,55 +177,61 @@ export const Home = () => {
          </div>
       </section>
 
+      {/* Recommendations - Pour Vous */}
+      {user && (
+        <section className="max-w-7xl mx-auto px-6">
+          <div className="flex flex-col md:flex-row justify-between items-center md:items-end mb-16 gap-8">
+            <div className="text-center md:text-left space-y-3">
+              <span className="text-accent font-black tracking-[0.3em] uppercase text-[10px] flex items-center justify-center md:justify-start gap-2">
+                <Sparkles className="w-3 h-3" /> Basé sur vos préférences
+              </span>
+              <h2 className="text-5xl font-black text-slate-900 tracking-tighter">Sélectionné pour Vous</h2>
+              <p className="text-slate-500 font-medium max-w-lg">Des produits qui correspondent à votre activité et vos recherches récentes.</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+            {personalRecs.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Near You Section */}
+      <section className="max-w-7xl mx-auto px-6">
+        <div className="flex flex-col md:flex-row justify-between items-center md:items-end mb-16 gap-8">
+          <div className="text-center md:text-left space-y-3">
+            <span className="text-primary-dark font-black tracking-[0.3em] uppercase text-[10px] flex items-center justify-center md:justify-start gap-2">
+              <MapPin className="w-3 h-3" /> Proximité Directe
+            </span>
+            <h2 className="text-5xl font-black text-slate-900 tracking-tighter">Près de chez Vous</h2>
+            <p className="text-slate-500 font-medium max-w-lg">Découvrez les producteurs actifs dans votre région pour réduire vos coûts logistiques.</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+          {nearbyProducts.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      </section>
+
       {/* Popular Products with Sleek Cards */}
       <section className="max-w-7xl mx-auto px-6">
           <div className="flex flex-col md:flex-row justify-between items-center md:items-end mb-20 gap-8">
             <div className="text-center md:text-left space-y-3">
-              <span className="text-primary-dark font-black tracking-[0.3em] uppercase text-[10px]">Tendance Actuelle</span>
+              <span className="text-primary-dark font-black tracking-[0.3em] uppercase text-[10px] flex items-center justify-center md:justify-start gap-2">
+                <TrendingUp className="w-3 h-3" /> Tendance Actuelle
+              </span>
               <h2 className="text-5xl font-black text-slate-900 tracking-tighter">Récoltes à la Une</h2>
               <p className="text-slate-500 font-medium max-w-lg">Les produits les plus plébiscités par nos acheteurs ce mois-ci.</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
-            {popularProducts.map((product) => (
-              <motion.div
-                 key={product.id}
-                 whileHover={{ y: -10 }}
-                 className="group"
-              >
-                <div className="bg-white rounded-[2.5rem] overflow-hidden shadow-xl shadow-slate-200/40 border border-slate-200 hover:border-primary-light transition-all duration-500 flex flex-col h-full overflow-hidden">
-                  <div className="relative aspect-square overflow-hidden">
-                    <img 
-                      src={product.images[0]} 
-                      alt={product.name}
-                      className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
-                    />
-                    <div className="absolute top-6 left-6">
-                      <span className="bg-white/90 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest text-primary-dark shadow-sm">
-                        {product.category}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="p-8 flex flex-col flex-grow bg-white">
-                    <h3 className="font-black text-xl text-slate-900 group-hover:text-primary-dark transition-colors line-clamp-1 tracking-tight mb-2">{product.name}</h3>
-                    <p className="text-sm text-slate-400 line-clamp-2 mb-8 leading-relaxed font-medium">{product.description}</p>
-                    
-                    <div className="mt-auto pt-6 border-t border-slate-50 flex items-center justify-between">
-                      <div className="flex flex-col">
-                        <span className="text-2xl font-black text-primary-dark tracking-tighter">{formatPrice(product.price)}</span>
-                        <span className="text-[9px] text-slate-400 font-black uppercase tracking-widest">/ {product.unit}</span>
-                      </div>
-                      <Link 
-                        to={`/products/${product.id}`}
-                        className="bg-slate-950 text-white p-3 rounded-2xl hover:bg-primary-dark transition-all shadow-xl shadow-slate-950/10"
-                      >
-                        <ArrowRight className="w-5 h-5" />
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
+            {trendingProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
             ))}
           </div>
       </section>
@@ -236,10 +251,10 @@ export const Home = () => {
                  className="bg-primary-dark hover:bg-white hover:text-slate-950 text-white px-12 py-6 rounded-[1.5rem] font-black text-sm uppercase tracking-widest shadow-2xl shadow-primary-dark/20 transition-all duration-500 group flex items-center justify-center"
                >
                  <span>Rejoindre l'Alliance</span>
-                 <ArrowRight className="ml-4 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                 <ArrowUpRight className="ml-4 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                </Link>
                <div className="flex items-center justify-center space-x-6 px-4">
-                  <Package className="text-slate-700 w-8 h-8" />
+                  <Boxes className="text-slate-700 w-8 h-8" />
                   <div className="text-left">
                      <p className="text-white text-sm font-bold">100% Gratuit</p>
                      <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Inscription instantanée</p>
@@ -252,5 +267,56 @@ export const Home = () => {
         </div>
       </section>
     </div>
+  );
+};
+
+const ProductCard = (props: any) => {
+  const { product } = props;
+  return (
+  <motion.div
+    whileHover={{ y: -10 }}
+    className="group"
+  >
+    <div className="bg-white rounded-[2.5rem] overflow-hidden shadow-xl shadow-slate-200/40 border border-slate-200 hover:border-primary-light transition-all duration-500 flex flex-col h-full overflow-hidden">
+      <div className="relative aspect-square overflow-hidden">
+        <img 
+          src={product.images[0]} 
+          alt={product.name}
+          className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+        />
+        <div className="absolute top-6 left-6 flex flex-col gap-2">
+          <span className="bg-white/90 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest text-primary-dark shadow-sm">
+            {product.category}
+          </span>
+          {product.subcategory && (
+            <span className="bg-primary-dark/90 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest text-white shadow-sm">
+              {product.subcategory}
+            </span>
+          )}
+        </div>
+      </div>
+      <div className="p-8 flex flex-col flex-grow bg-white">
+        <div className="flex items-center gap-2 mb-2">
+          <MapPin className="w-3 h-3 text-slate-400" />
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{product.location.city}</span>
+        </div>
+        <h3 className="font-black text-xl text-slate-900 group-hover:text-primary-dark transition-colors line-clamp-1 tracking-tight mb-2">{product.name}</h3>
+        <p className="text-sm text-slate-400 line-clamp-2 mb-8 leading-relaxed font-medium">{product.description}</p>
+        
+        <div className="mt-auto pt-6 border-t border-slate-50 flex items-center justify-between gap-4">
+          <div className="flex flex-col min-w-0">
+            <span className="text-xl md:text-2xl font-black text-primary-dark tracking-tighter truncate">{formatPrice(product.price)}</span>
+            <span className="text-[9px] text-slate-400 font-black uppercase tracking-widest">/ {product.unit}</span>
+          </div>
+          <Link 
+            to={`/products/${product.id}`}
+            className="bg-slate-950 text-white p-3 rounded-2xl hover:bg-primary-dark transition-all shadow-xl shadow-slate-950/10 shrink-0"
+          >
+            <ArrowUpRight className="w-5 h-5" />
+          </Link>
+        </div>
+      </div>
+    </div>
+  </motion.div>
   );
 };

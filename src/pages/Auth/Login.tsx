@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { Mail, Lock, Eye, EyeOff, Leaf, ArrowRight, Github, ShieldCheck } from 'lucide-react';
-import { useStore } from '../../store/useStore';
+import { Mail, Lock, Eye, EyeOff, Leaf, MoveRight, Github, ShieldCheck } from 'lucide-react';
+import { useStore } from '../../application/store/useStore';
 import { motion } from 'motion/react';
 
 export const Login = () => {
@@ -112,7 +112,7 @@ export const Login = () => {
             {isLoading ? (
               <span className="flex items-center"><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-3" /> Traitement...</span>
             ) : (
-              <span className="flex items-center">Entrer dans l'Alliance <ArrowRight className="ml-3 w-4 h-4 group-hover:translate-x-1 transition-transform" /></span>
+              <span className="flex items-center">Entrer dans l'Alliance <MoveRight className="ml-3 w-4 h-4 group-hover:translate-x-1 transition-transform" /></span>
             )}
           </button>
 
@@ -134,7 +134,7 @@ export const Login = () => {
         <p className="text-center text-xs font-black uppercase tracking-widest text-slate-400">
           Nouveau sur le marché ?{' '}
           <Link to="/register" className="text-primary-dark hover:text-primary-light flex items-center justify-center mt-3 group">
-             Créer mon profil d'acheteur <ArrowRight className="ml-2 w-3 h-3 group-hover:translate-x-1 transition-transform" />
+             Créer mon profil d'acheteur <MoveRight className="ml-2 w-3 h-3 group-hover:translate-x-1 transition-transform" />
           </Link>
         </p>
       </motion.div>

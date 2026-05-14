@@ -7,11 +7,12 @@ import { ProductDetails } from './pages/ProductDetails';
 import { Login } from './pages/Auth/Login';
 import { Register } from './pages/Auth/Register';
 import { Dashboard } from './pages/Dashboard/Dashboard';
+import { BuyerProfile } from './pages/Dashboard/BuyerProfile';
 import { MapView } from './pages/Map/MapView';
 import { Favorites } from './pages/Favorites';
 import { Cart } from './pages/Cart';
-import { AdminPanel } from './pages/Admin/AdminPanel';
-import { useStore } from './store/useStore';
+import { AdminDashboard } from './pages/Dashboard/AdminDashboard';
+import { useStore } from './application/store/useStore';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, adminOnly = false }: { children: React.ReactNode, adminOnly?: boolean }) => {
@@ -19,6 +20,12 @@ const ProtectedRoute = ({ children, adminOnly = false }: { children: React.React
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (adminOnly && user?.role !== 'admin') return <Navigate to="/" replace />;
   return <>{children}</>;
+};
+
+const DashboardContainer = () => {
+  const { user } = useStore();
+  if (user?.role === 'admin') return <AdminDashboard />;
+  return user?.role === 'farmer' ? <Dashboard /> : <BuyerProfile />;
 };
 
 export default function App() {
@@ -40,14 +47,14 @@ export default function App() {
           {/* Dashboard */}
           <Route path="dashboard/*" element={
             <ProtectedRoute>
-              <Dashboard />
+              <DashboardContainer />
             </ProtectedRoute>
           } />
 
           {/* Admin */}
           <Route path="admin" element={
             <ProtectedRoute adminOnly>
-              <AdminPanel />
+              <AdminDashboard />
             </ProtectedRoute>
           } />
         </Route>

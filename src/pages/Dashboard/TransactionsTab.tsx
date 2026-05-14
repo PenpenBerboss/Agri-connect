@@ -1,7 +1,6 @@
-import React from 'react';
-import { ShoppingBag, ChevronRight, Filter, Download } from 'lucide-react';
-import { MOCK_ORDERS } from '../../data/mockData';
-import { formatPrice, cn } from '../../lib/utils';
+import { Briefcase, MoveRight, Filter, FileDown } from 'lucide-react';
+import { MOCK_ORDERS } from '../../services/mock/mockData';
+import { formatPrice, cn } from '../../shared/utils';
 
 export const TransactionsTab = () => {
   const getStatusColor = (status: string) => {
@@ -37,7 +36,7 @@ export const TransactionsTab = () => {
             <span>Filtrer</span>
           </button>
           <button className="flex items-center space-x-2 bg-slate-950 text-white px-6 py-4 rounded-xl hover:bg-primary-dark shadow-xl shadow-slate-950/20 transition-all font-black text-[10px] uppercase tracking-widest">
-            <Download className="w-4 h-4" />
+            <FileDown className="w-4 h-4" />
             <span>Exporter CSV</span>
           </button>
         </div>
@@ -91,7 +90,7 @@ export const TransactionsTab = () => {
                   </td>
                   <td className="px-8 py-6">
                     <button className="p-2.5 bg-white border border-slate-100 rounded-xl text-slate-400 hover:text-primary-dark hover:bg-slate-50 transition-all shadow-sm">
-                      <ChevronRight className="w-4 h-4" />
+                      <MoveRight className="w-4 h-4" />
                     </button>
                   </td>
                 </tr>
