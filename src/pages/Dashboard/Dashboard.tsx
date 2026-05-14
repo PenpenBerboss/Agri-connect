@@ -35,6 +35,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { CatalogueTab } from './CatalogueTab';
 import { TransactionsTab } from './TransactionsTab';
 import { ReportsTab } from './ReportsTab';
+import { ImageUploader } from '../../components/ImageUploader';
 
 type TabType = 'overview' | 'catalogue' | 'transactions' | 'reports' | 'settings';
 
@@ -43,6 +44,7 @@ export const Dashboard = () => {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [showAddSale, setShowAddSale] = useState(false);
+  const [productImage, setProductImage] = useState('');
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -58,7 +60,7 @@ export const Dashboard = () => {
       description: formData.get('description') as string,
       sellerId: user?.id || '1',
       sellerName: user?.name || 'Vendeur',
-      images: ['https://images.unsplash.com/photo-1595111028886-df9b824d395a?w=800&q=80'], // Fallback image
+      images: [productImage || 'https://images.unsplash.com/photo-1595111028886-df9b824d395a?w=800&q=80'], // Use uploaded image
       stock: 100,
       rating: 5,
       reviews: 0,
@@ -69,6 +71,7 @@ export const Dashboard = () => {
     addProduct(newProduct as any);
     setShowAddProduct(false);
     setActiveTab('catalogue');
+    setProductImage('');
   };
 
   const handleSaleSubmit = (e: React.FormEvent<HTMLFormElement>) => {

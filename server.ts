@@ -46,6 +46,44 @@ async function startServer() {
     res.json(data);
   });
 
+  // API Product routes
+  app.get("/api/products", async (_req, res) => {
+    const { data, error } = await supabaseAdmin.from('products').select('*');
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data);
+  });
+
+  app.post("/api/products", async (req, res) => {
+    const { data, error } = await supabaseAdmin.from('products').insert(req.body).select();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data[0]);
+  });
+
+  app.put("/api/products/:id", async (req, res) => {
+    const { data, error } = await supabaseAdmin.from('products').update(req.body).eq('id', req.params.id).select();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data[0]);
+  });
+
+  app.delete("/api/products/:id", async (req, res) => {
+    const { error } = await supabaseAdmin.from('products').delete().eq('id', req.params.id);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ success: true });
+  });
+
+  // API Order routes
+  app.get("/api/orders", async (_req, res) => {
+    const { data, error } = await supabaseAdmin.from('orders').select('*, products(name)');
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data);
+  });
+
+  app.post("/api/orders", async (req, res) => {
+    const { data, error } = await supabaseAdmin.from('orders').insert(req.body).select();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data[0]);
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({

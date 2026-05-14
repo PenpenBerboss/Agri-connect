@@ -20,9 +20,19 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dataPath = path.join(__dirname, '../src/services/mock/generatedMassiveData.json');
 const massiveData = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
 
-const { users: MOCK_USERS, products: MOCK_PRODUCTS, reviews: MOCK_REVIEWS } = massiveData;
+const { users: MOCK_USERS, products: MOCK_PRODUCTS, reviews: MOCK_REVIEWS, orders: MOCK_ORDERS } = massiveData;
+
+async function truncateTables() {
+  console.log('Truncating tables...');
+  await supabase.from('reviews').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  await supabase.from('orders').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  await supabase.from('products').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  await supabase.from('profiles').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  console.log('Truncation completed.');
+}
 
 async function seed() {
+  await truncateTables();
   console.log('Starting seed...');
 
   // 1. Seed Profiles en lot (Bulk)
@@ -56,8 +66,21 @@ async function seed() {
   const { error: productError } = await supabase.from('products').upsert(products);
   if (productError) console.error('Error seeding products batch:', productError.message);
 
-  // 3. Seed Orders
-  console.log('Skipping order seeding due to lack of relational data mapping in current mock');
+  // 3. Seed Orders en lot
+  console.log(`Seeding ${MOCK_ORDERS.length} orders...`);
+  const orders = MOCK_ORDERS.map((o: any) => ({
+    id: o.id,
+    customer_id: o.customerId,
+    seller_id: o.sellerId,
+    product_id: o.productId,
+    quantity: o.quantity,
+    amount: o.amount,
+    status: o.status,
+    created_at: o.createdAt ? new Date(o.createdAt).toISOString() : new Date().toISOString()
+  }));
+
+  const { error: orderError } = await supabase.from('orders').upsert(orders);
+  if (orderError) console.error('Error seeding orders batch:', orderError.message);
 
   // 4. Seed Reviews en lot
   console.log(`Seeding ${MOCK_REVIEWS.length} reviews...`);
@@ -67,7 +90,7 @@ async function seed() {
     buyer_id: r.buyerId,
     rating: r.rating,
     comment: r.comment,
-    created_at: new Date().toISOString()
+    created_at: r.createdAt ? new Date(r.createdAt).toISOString() : new Date().toISOString()
   }));
 
   const { error: reviewError } = await supabase.from('reviews').upsert(reviews);

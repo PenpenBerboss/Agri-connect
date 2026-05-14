@@ -55,7 +55,7 @@ export const Home = () => {
               L'Agriculture <br/><span className="text-primary-light italic font-serif serif-bold">Sublimée.</span>
             </h1>
             <p className="text-xl md:text-2xl text-slate-300 mb-14 leading-relaxed font-black tracking-tight max-w-xl opacity-90">
-              Connectez-vous à la terre. Achetez et vendez sans intermédiaires sur la première plateforme agricole certifiée.
+              Connectez-vous à la terre. Achetez et vendez sans intermédiaires sur notre plateforme agricole.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-6">

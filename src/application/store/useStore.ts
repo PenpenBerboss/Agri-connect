@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { User, Product } from '../../core/types';
-import { MOCK_USERS, MOCK_PRODUCTS } from '../../services/mock/mockData';
+import { MOCK_PRODUCTS } from '../../services/mock/mockData';
+import { authService } from '../../services/authService';
 
 interface CartItem {
   productId: string;
@@ -17,8 +18,8 @@ interface AppState {
   
   // Auth actions
   login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
-  register: (data: Partial<User>) => Promise<void>;
+  logout: () => Promise<void>;
+  register: (data: any) => Promise<void>;
   
   // Favorites actions
   toggleFavorite: (productId: string) => void;
@@ -46,28 +47,26 @@ export const useStore = create<AppState>()(
       products: MOCK_PRODUCTS,
       cart: [],
 
-      login: async (email, _password) => {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 800));
-        const foundUser = MOCK_USERS.find(u => u.email === email) || MOCK_USERS[0];
-        set({ user: foundUser, isAuthenticated: true });
+      login: async (email, password) => {
+        await authService.signIn({ email, password });
+        const user = await authService.getCurrentUser();
+        set({ user: user as any, isAuthenticated: true });
       },
 
-      logout: () => {
+      logout: async () => {
+        await authService.signOut();
         set({ user: null, isAuthenticated: false });
       },
 
       register: async (data) => {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        const newUser: User = {
-          id: Math.random().toString(36).substr(2, 9),
-          name: data.name || 'New User',
-          email: data.email || '',
-          role: data.role || 'buyer',
-          joinedAt: new Date().toISOString().split('T')[0],
-          ...data
-        };
-        set({ user: newUser, isAuthenticated: true });
+        await authService.signUp({
+            email: data.email,
+            password: data.password,
+            name: data.name,
+            role: data.role
+        });
+        const user = await authService.getCurrentUser();
+        set({ user: user as any, isAuthenticated: true });
       },
 
       toggleFavorite: (productId) => {

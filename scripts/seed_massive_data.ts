@@ -67,9 +67,9 @@ function getRandomInRange(min: number, max: number, decimals = 2) {
 // 1. Generate Users
 const users = [];
 const roles = ['farmer', 'buyer'];
-for (let i = 1; i <= 500; i++) {
+for (let i = 1; i <= 100; i++) {
   const city = getRandomElement(CITIES);
-  const role = i <= 100 ? 'farmer' : 'buyer'; // 100 farmers, 400 buyers
+  const role = i <= 30 ? 'farmer' : 'buyer'; // 30 farmers, 70 buyers
   users.push({
     id: randomUUID(),
     name: `User ${i} Cameroon`,
@@ -94,7 +94,7 @@ const farmers = users.filter(u => u.role === 'farmer');
 // 2. Generate Products
 const products = [];
 const crops = Object.keys(PRODUCT_NAMES);
-for (let i = 1; i <= 3000; i++) {
+for (let i = 1; i <= 300; i++) {
   const seller = getRandomElement(farmers);
   const crop = getRandomElement(crops);
   const name = getRandomElement(PRODUCT_NAMES[crop]);
@@ -154,7 +154,7 @@ const actions = ['view', 'favorite', 'contact', 'search', 'click', 'map_view'];
 const buyers = users.filter(u => u.role === 'buyer');
 
 // To simulate patterns, some buyers will prefer certain categories or regions
-for (let i = 1; i <= 50000; i++) {
+for (let i = 1; i <= 1000; i++) {
   const buyer = getRandomElement(buyers);
   const action = getRandomElement(actions);
   
@@ -178,12 +178,12 @@ for (let i = 1; i <= 50000; i++) {
 
 // 4. Generate Reviews
 const reviews = [];
-for (let i = 1; i <= 1000; i++) {
+for (let i = 1; i <= 200; i++) {
   const buyer = getRandomElement(buyers);
   const product = getRandomElement(products);
   reviews.push({
     id: randomUUID(),
-    productId: product.id, // Gardé pour référence interne si besoin
+    productId: product.id,
     buyerId: buyer.id,
     sellerId: product.sellerId,
     rating: getRandomInRange(3, 5, 0),
@@ -199,25 +199,43 @@ for (let i = 1; i <= 1000; i++) {
   });
 }
 
-const finalData = {
-  users,
-  products,
-  history,
-  reviews
-};
+// 5. Generate Orders
+const orders = [];
+for (let i = 1; i <= 200; i++) {
+  const buyer = getRandomElement(buyers);
+  const product = getRandomElement(products);
+  orders.push({
+    id: randomUUID(),
+    customerId: buyer.id,
+    sellerId: product.sellerId,
+    productId: product.id,
+    quantity: getRandomInRange(1, 10, 0),
+    amount: getRandomInRange(1000, 50000, 0),
+    status: getRandomElement(['pending', 'delivered', 'cancelled']),
+    createdAt: new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 30).toISOString()
+  });
+}
 
 const outputDir = path.join(__dirname, '..', 'src', 'services', 'mock');
 if (!fs.existsSync(outputDir)) {
   fs.mkdirSync(outputDir, { recursive: true });
 }
 
-fs.writeFileSync(
-  path.join(outputDir, 'generatedMassiveData.json'),
-  JSON.stringify(finalData, null, 2)
-);
+const filePath = path.join(outputDir, 'generatedMassiveData.json');
+const stream = fs.createWriteStream(filePath);
+
+stream.write('{\n');
+stream.write('  "users": ' + JSON.stringify(users, null, 2) + ',\n');
+stream.write('  "products": ' + JSON.stringify(products, null, 2) + ',\n');
+stream.write('  "history": ' + JSON.stringify(history, null, 2) + ',\n');
+stream.write('  "reviews": ' + JSON.stringify(reviews, null, 2) + ',\n');
+stream.write('  "orders": ' + JSON.stringify(orders, null, 2) + '\n');
+stream.write('}\n');
+stream.end();
 
 console.log('Massive dataset generated successfully!');
 console.log(`- ${users.length} Users`);
 console.log(`- ${products.length} Products`);
 console.log(`- ${history.length} Interactions`);
 console.log(`- ${reviews.length} Reviews`);
+console.log(`- ${orders.length} Orders`);
