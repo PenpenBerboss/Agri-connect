@@ -12,13 +12,13 @@ export const MASSIVE_USERS = MOCK_USERS;
 export const MASSIVE_HISTORY = MOCK_HISTORY;
 export const MASSIVE_REVIEWS = MOCK_REVIEWS;
 
-export const CATEGORIES: { label: string; value: Category; icon: string }[] = [
-  { label: 'Céréales', value: 'céréales', icon: '🌾' },
-  { label: 'Tubercules', value: 'tubercules', icon: '🍠' },
-  { label: 'Fruits', value: 'fruits', icon: '🍍' },
-  { label: 'Légumes', value: 'légumes', icon: '🥬' },
-  { label: 'Semences', value: 'semences', icon: '🌱' },
-  { label: 'Engrais', value: 'engrais', icon: '🧪' },
+export const CATEGORIES: { label: string; value: Category; icon: string; imagePath?: string }[] = [
+  { label: 'Céréales', value: 'céréales', icon: '🌾', imagePath: '/assets/cereale.jpg' },
+  { label: 'Tubercules', value: 'tubercules', icon: '🍠', imagePath: '/assets/tubercule.jpg' },
+  { label: 'Fruits', value: 'fruits', icon: '🍍', imagePath: '/assets/fruit.jpg' },
+  { label: 'Légumes', value: 'légumes', icon: '🥬', imagePath: '/assets/legume.jpg' },
+  { label: 'Semences', value: 'semences', icon: '🌱', imagePath: '/assets/semence.jpg' },
+  { label: 'Engrais', value: 'engrais', icon: '🧪', imagePath: '/assets/engrais.jpg' },
 ];
 
 export const CAMEROON_CITIES = [

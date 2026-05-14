@@ -124,7 +124,11 @@ export const Home = () => {
               className="bg-white p-12 rounded-[2.5rem] border border-slate-100 shadow-[0_20px_40px_rgba(0,0,0,0.03)] hover:shadow-[0_40px_80px_rgba(0,0,0,0.1)] hover:border-primary-light transition-all duration-500 text-center group cursor-pointer relative overflow-hidden"
             >
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary-light to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="text-6xl mb-8 group-hover:rotate-12 transition-transform duration-500 filter grayscale group-hover:grayscale-0">{cat.icon}</div>
+              {cat.imagePath ? (
+                <img src={cat.imagePath} alt={cat.label} className="w-20 h-20 mx-auto mb-8 rounded-full object-cover group-hover:rotate-12 transition-transform duration-500 filter grayscale group-hover:grayscale-0" />
+              ) : (
+                <div className="text-6xl mb-8 group-hover:rotate-12 transition-transform duration-500 filter grayscale group-hover:grayscale-0">{cat.icon}</div>
+              )}
               <h3 className="font-black text-slate-800 uppercase text-xs tracking-[0.2em]">{cat.label}</h3>
             </motion.div>
           ))}

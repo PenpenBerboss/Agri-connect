@@ -76192,4 +76192,38 @@
       ],
       "keywords": [
         "haricot",
-        "Cam
+        "bio",
+        "Yaoundé"
+      ],
+      "createdAt": "2026-05-14T03:19:23.302Z"
+    }
+  ],
+  "history": [
+    {
+      "user_id": "user_101",
+      "product_id": "prod_1",
+      "action_type": "view",
+      "duration": 45,
+      "created_at": "2026-05-15T10:00:00Z"
+    },
+    {
+      "user_id": "user_101",
+      "product_id": "prod_1",
+      "action_type": "favorite",
+      "duration": 0,
+      "created_at": "2026-05-15T10:05:00Z"
+    }
+  ],
+  "reviews": [
+    {
+      "id": "rev_1",
+      "productId": "prod_1",
+      "userId": "user_101",
+      "userName": "User 101 Cameroon",
+      "userAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=user101",
+      "rating": 5,
+      "comment": "Excellente qualité, livraison rapide sur Douala !",
+      "createdAt": "2026-05-15T11:30:00Z"
+    }
+  ]
+}
