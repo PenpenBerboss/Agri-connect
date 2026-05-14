@@ -7,9 +7,18 @@ CREATE TABLE IF NOT EXISTS profiles (
     name TEXT NOT NULL,
     email TEXT UNIQUE NOT NULL,
     role TEXT NOT NULL DEFAULT 'buyer', -- 'admin', 'farmer', 'buyer'
+    status TEXT NOT NULL DEFAULT 'pending', -- 'pending' (default), 'active', 'suspended'
     avatar_url TEXT,
     joined_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
+
+-- Enable RLS
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+
+-- Policies
+CREATE POLICY "Public profiles are viewable by everyone." ON profiles FOR SELECT USING (true);
+CREATE POLICY "Users can update own profile." ON profiles FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Admins can update all profiles." ON profiles FOR UPDATE USING ( (SELECT role FROM profiles WHERE id = auth.uid()) = 'admin' );
 
 -- Products table
 CREATE TABLE IF NOT EXISTS products (

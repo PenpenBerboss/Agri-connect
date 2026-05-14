@@ -24,6 +24,7 @@ async function seed() {
       name: user.name,
       email: user.email,
       role: user.role,
+      status: 'active', // Assuming existing mock users are pre-validated
       avatar_url: user.avatar,
       joined_at: user.joinedAt ? new Date(user.joinedAt).toISOString() : new Date().toISOString()
     });
