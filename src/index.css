@@ -1,0 +1,76 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@1,700;1,900&display=swap');
+@import "leaflet/dist/leaflet.css";
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Playfair Display", serif;
+  
+  --color-primary-dark: #114214; /* Deepened for Sleek contrast */
+  --color-primary-light: #4CAF50;
+  --color-secondary: #0f172a; /* Slate 900 */
+  --color-accent: #f97316;
+  --color-gray-soft: #f8fafc;
+
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
+  --radius-4xl: 2.5rem;
+  --radius-5xl: 4rem;
+
+  --shadow-sleek: 0 20px 50px -12px rgba(0, 0, 0, 0.05);
+  --shadow-sleek-hover: 0 40px 80px -15px rgba(0, 0, 0, 0.1);
+}
+
+@layer base {
+  body {
+    @apply font-sans bg-slate-50 text-slate-900 antialiased selection:bg-primary-light/30;
+  }
+}
+
+/* Leaflet maps styling */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  border-radius: 1.5rem;
+  z-index: 0;
+  filter: saturate(0.8) contrast(1.1) brightness(1.05);
+}
+
+/* Smooth transitions */
+a, button {
+  @apply transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)];
+}
+
+/* Custom Scrollbar matching Sleek theme */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 rounded-full hover:bg-primary-light transition-colors;
+}
+
+.card-sleek {
+  @apply bg-white border border-slate-100 shadow-sleek hover:shadow-sleek-hover rounded-[2rem] transition-all;
+}
+
+.glass-morphism {
+  @apply bg-white/70 backdrop-blur-2xl border border-white/40;
+}
+
+.serif-bold {
+  font-family: var(--font-serif);
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+/* Hide scrollbar for IE, Edge and Firefox */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}

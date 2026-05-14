@@ -1,0 +1,13 @@
+{
+  "name": "AgriConnect",
+  "description": "Plateforme agricole camerounaise reliant agriculteurs et acheteurs. Marketplace moderne, géolocalisée et interactive pour le secteur agricole.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "Marketplace",
+    "Dashboard",
+    "Geolocation",
+    "Analytics"
+  ]
+}
