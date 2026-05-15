@@ -16,7 +16,7 @@ interface AppState {
   products: Product[];
   reviews: any[];
   cart: CartItem[];
-  
+
   // Auth actions
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -24,7 +24,7 @@ interface AppState {
   checkAuth: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signInWithFacebook: () => Promise<void>;
-  
+
   // Favorites actions
   toggleFavorite: (productId: string) => void;
   isFavorite: (productId: string) => boolean;
@@ -38,8 +38,8 @@ interface AppState {
   // Product fetching (mock)
   fetchProducts: () => Promise<void>;
   addProduct: (product: Product) => void;
-  updateProduct: (product: Product) => void;
-  deleteProduct: (productId: string) => void;
+  updateProduct: (product: Product) => Promise<void>;
+  deleteProduct: (productId: string) => Promise<void>;
   updateProfile: (profile: any) => Promise<void>;
 
   // Reviews
@@ -51,6 +51,13 @@ interface AppState {
   orders: any[];
   fetchOrders: () => Promise<void>;
   createOrder: (order: any) => Promise<void>;
+}
+
+function isProfileMissingError(err: unknown): boolean {
+  const anyErr = err as { code?: string; message?: string; hint?: string } | undefined;
+  const code = anyErr?.code ?? anyErr?.hint ?? '';
+  const msg = String(anyErr?.message ?? '');
+  return code === 'PGRST116' || msg.toLowerCase().includes('single row');
 }
 
 export const useStore = create<AppState>()(
@@ -67,9 +74,18 @@ export const useStore = create<AppState>()(
       login: async (email, password) => {
         await authService.signIn({ email, password });
         const user = await authService.getCurrentUser();
-        if (user) {
+
+        if (!user) return;
+
+        try {
           const profile = await apiService.getProfileById(user.id);
           set({ user: { ...user, ...profile } as any, isAuthenticated: true });
+        } catch (err) {
+          if (isProfileMissingError(err)) {
+            set({ user: user as any, isAuthenticated: true });
+            return;
+          }
+          throw err;
         }
       },
 
@@ -80,25 +96,43 @@ export const useStore = create<AppState>()(
 
       register: async (data) => {
         await authService.signUp({
-            email: data.email,
-            password: data.password,
-            name: data.name,
-            role: data.role
+          email: data.email,
+          password: data.password,
+          name: data.name,
+          role: data.role,
         });
+
         const user = await authService.getCurrentUser();
-        if (user) {
+        if (!user) return;
+
+        try {
           const profile = await apiService.getProfileById(user.id);
           set({ user: { ...user, ...profile } as any, isAuthenticated: true });
+        } catch (err) {
+          if (isProfileMissingError(err)) {
+            set({ user: user as any, isAuthenticated: true });
+            return;
+          }
+          throw err;
         }
       },
 
       checkAuth: async () => {
         const user = await authService.getCurrentUser();
-        if (user) {
+        if (!user) {
+          set({ user: null, isAuthenticated: false });
+          return;
+        }
+
+        try {
           const profile = await apiService.getProfileById(user.id);
           set({ user: { ...user, ...profile } as any, isAuthenticated: true });
-        } else {
-          set({ user: null, isAuthenticated: false });
+        } catch (err) {
+          if (isProfileMissingError(err)) {
+            set({ user: user as any, isAuthenticated: true });
+            return;
+          }
+          throw err;
         }
       },
 
@@ -113,7 +147,7 @@ export const useStore = create<AppState>()(
       toggleFavorite: (productId) => {
         const { favorites } = get();
         if (favorites.includes(productId)) {
-          set({ favorites: favorites.filter(id => id !== productId) });
+          set({ favorites: favorites.filter((id) => id !== productId) });
         } else {
           set({ favorites: [...favorites, productId] });
         }
@@ -125,13 +159,14 @@ export const useStore = create<AppState>()(
 
       addToCart: (productId, quantity = 1) => {
         const { cart } = get();
-        const existingItem = cart.find(item => item.productId === productId);
+        const existingItem = cart.find((item) => item.productId === productId);
+
         if (existingItem) {
           set({
-            cart: cart.map(item =>
+            cart: cart.map((item) =>
               item.productId === productId
                 ? { ...item, quantity: item.quantity + quantity }
-                : item
+                : item,
             ),
           });
         } else {
@@ -140,7 +175,7 @@ export const useStore = create<AppState>()(
       },
 
       removeFromCart: (productId) => {
-        set({ cart: get().cart.filter(item => item.productId !== productId) });
+        set({ cart: get().cart.filter((item) => item.productId !== productId) });
       },
 
       updateQuantity: (productId, quantity) => {
@@ -149,8 +184,8 @@ export const useStore = create<AppState>()(
           return;
         }
         set({
-          cart: get().cart.map(item =>
-            item.productId === productId ? { ...item, quantity } : item
+          cart: get().cart.map((item) =>
+            item.productId === productId ? { ...item, quantity } : item,
           ),
         });
       },
@@ -180,14 +215,14 @@ export const useStore = create<AppState>()(
       updateProduct: async (product) => {
         const updatedProduct = await apiService.updateProduct(product.id, product);
         set({
-          products: get().products.map(p => p.id === product.id ? updatedProduct : p)
+          products: get().products.map((p) => (p.id === product.id ? updatedProduct : p)),
         });
       },
 
       deleteProduct: async (productId) => {
         await apiService.deleteProduct(productId);
         set({
-          products: get().products.filter(p => p.id !== productId)
+          products: get().products.filter((p) => p.id !== productId),
         });
       },
 
@@ -206,10 +241,10 @@ export const useStore = create<AppState>()(
       recordProductView: async (productId) => {
         try {
           const updatedProduct = await apiService.recordProductView(productId);
-          const products = get().products.map(p => p.id === productId ? updatedProduct : p);
+          const products = get().products.map((p) => (p.id === productId ? updatedProduct : p));
           set({ products });
         } catch (error) {
-          console.error("Error recording view", error);
+          console.error('Error recording view', error);
         }
       },
 
@@ -218,17 +253,17 @@ export const useStore = create<AppState>()(
         if (!user) return;
         const updatedProfile = await apiService.updateProfile(user.id, profileData);
         set({ user: { ...user, ...updatedProfile } });
-      }
+      },
     }),
     {
       name: 'agriconnect-storage',
-      partialize: (state) => ({ 
+      partialize: (state) => ({
         favorites: state.favorites,
         cart: state.cart,
         user: state.user,
         isAuthenticated: state.isAuthenticated,
-        products: state.products
+        products: state.products,
       }),
-    }
-  )
+    },
+  ),
 );
