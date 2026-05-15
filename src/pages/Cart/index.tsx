@@ -7,7 +7,7 @@ import { motion } from 'motion/react';
 import { toast } from 'react-hot-toast';
 
 export const Cart = () => {
-  const { cart, removeFromCart, updateQuantity, clearCart, products } = useStore();
+  const { cart, removeFromCart, updateQuantity, clearCart, products, user, createOrder } = useStore();
   const navigate = useNavigate();
 
   const cartProducts = cart.map(item => {
@@ -129,9 +129,30 @@ export const Cart = () => {
                 <button 
                   onClick={async () => {
                     try {
-                      // Mocking order placement
+                      if (!user) {
+                        toast.error('Connectez-vous pour passer commande.', { id: 'order-loading' });
+                        return;
+                      }
+                      if (cartProducts.length === 0) {
+                        toast.error('Votre panier est vide.', { id: 'order-loading' });
+                        return;
+                      }
+
                       toast.loading('Traitement de votre commande...', { id: 'order-loading' });
-                      await new Promise(resolve => setTimeout(resolve, 2000));
+
+                      // Crée une commande par produit (comme ton UI le structure)
+                      for (const p of cartProducts) {
+                        await createOrder({
+                          customer_id: user.id,
+                          seller_id: p.seller_id,
+                          product_id: p.id,
+                          quantity: p.quantity,
+                          amount: p.price * p.quantity,
+                          status: 'delivered',
+                          created_at: new Date().toISOString(),
+                        });
+                      }
+
                       clearCart();
                       toast.dismiss('order-loading');
                       toast.success('Commande passée avec succès !');
@@ -139,6 +160,7 @@ export const Cart = () => {
                     } catch (err) {
                       toast.dismiss('order-loading');
                       toast.error('Erreur lors de la commande.');
+                      console.error(err);
                     }
                   }}
                   className="w-full bg-primary-dark hover:bg-primary-light text-white py-6 rounded-2xl font-black text-sm uppercase tracking-[0.2em] shadow-2xl shadow-primary-dark/20 transition-all active:scale-95"

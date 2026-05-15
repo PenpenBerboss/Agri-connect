@@ -252,9 +252,9 @@ export const Products = () => {
                               </div>
                               <Link 
                                to={`/products/${product.id}`}
-                               className="bg-slate-950 text-white text-[10px] font-black uppercase tracking-widest px-4 md:px-6 py-3 rounded-xl hover:bg-primary-dark shadow-lg shadow-slate-950/10 active:scale-95 shrink-0 transition-all"
+                               className="bg-slate-950 text-white text-[12px] font-black uppercase tracking-[0.15em] px-5 md:px-7 py-4 rounded-2xl hover:bg-primary-dark shadow-lg shadow-slate-950/10 active:scale-95 shrink-0 transition-all whitespace-nowrap inline-flex items-center justify-center"
                               >
-                                Explorer
+                                <span className="leading-none">Explorer</span>
                               </Link>
                            </div>
                         </div>

@@ -18,8 +18,19 @@ export const BuyerProfile = () => {
   const { user, logout, favorites, orders, fetchOrders } = useStore();
 
   React.useEffect(() => {
+    // chargement initial
     if (orders.length === 0) fetchOrders();
   }, [fetchOrders, orders.length]);
+
+  React.useEffect(() => {
+    // recharge quand l'utilisateur est défini (cas après création/connexion)
+    if (user?.id && orders.length > 0) {
+      // si une commande vient d'être créée, fetchOrders garantit la synchro DB
+      // (sinon on reste bloqué sur l'état local persistant)
+      fetchOrders();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   const userOrders = orders.filter(o => o.customer_id === user?.id);
 
