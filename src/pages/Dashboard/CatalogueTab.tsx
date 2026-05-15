@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import { Boxes, Plus, Search, SquarePen, Trash2, ScanEye } from 'lucide-react';
-import { MOCK_PRODUCTS } from '../../services/mock/mockData';
 import { formatPrice, cn } from '../../shared/utils';
 import { useStore } from '../../application/store/useStore';
+import { EditProductModal } from './EditProductModal';
 
 export const CatalogueTab = () => {
   const { user, products, deleteProduct } = useStore();
   const [search, setSearch] = useState('');
+  const [editingProduct, setEditingProduct] = useState<any>(null);
   
   const userProducts = products.filter(p => 
-    p.sellerId === user?.id && 
-    (p.name.toLowerCase().includes(search.toLowerCase()) || p.category.toLowerCase().includes(search.toLowerCase()))
+    (user?.role === 'admin' || p.seller_id === user?.id) && 
+    (p.name.toLowerCase().includes(search.toLowerCase()) || (p.category?.toLowerCase() || '').includes(search.toLowerCase()))
   );
 
   const handleDelete = (id: string, name: string) => {
@@ -56,7 +57,7 @@ export const CatalogueTab = () => {
                   <td className="px-8 py-6">
                     <div className="flex items-center gap-4">
                       <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-lg border border-slate-100">
-                        <img src={p.images[0]} className="w-full h-full object-cover" alt="" />
+                        <img src={p.images?.[0] || 'https://images.unsplash.com/photo-1595111028886-df9b824d395a?w=800&q=80'} className="w-full h-full object-cover" alt="" />
                       </div>
                       <div>
                         <p className="font-black text-slate-900 text-sm group-hover:text-primary-dark transition-colors">{p.name}</p>
@@ -95,7 +96,10 @@ export const CatalogueTab = () => {
                   </td>
                   <td className="px-8 py-6">
                     <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="p-2.5 bg-white border border-slate-100 rounded-xl text-slate-400 hover:text-primary-dark hover:bg-slate-50 transition-all shadow-sm">
+                      <button 
+                        onClick={() => setEditingProduct(p)}
+                        className="p-2.5 bg-white border border-slate-100 rounded-xl text-slate-400 hover:text-primary-dark hover:bg-slate-50 transition-all shadow-sm"
+                      >
                         <SquarePen className="w-4 h-4" />
                       </button>
                       <button 
@@ -112,6 +116,12 @@ export const CatalogueTab = () => {
           </table>
         </div>
       </div>
+
+      <EditProductModal 
+        isOpen={!!editingProduct} 
+        product={editingProduct} 
+        onClose={() => setEditingProduct(null)} 
+      />
     </div>
   );
 };

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import { MOCK_PRODUCTS, CATEGORIES } from '../../services/mock/mockData';
 import { formatPrice, cn } from '../../shared/utils';
+import { useStore } from '../../application/store/useStore';
 import { Link } from 'react-router-dom';
 import { MapPin, Search, Navigation, Layers, Filter, MoveRight, LocateFixed } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -49,6 +49,7 @@ const LocationMarker = ({ shouldLocate }: { shouldLocate: boolean }) => {
 };
 
 export const MapView = () => {
+  const { products } = useStore();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [shouldLocate, setShouldLocate] = useState(false);
   
@@ -62,8 +63,8 @@ export const MapView = () => {
   };
 
   const filteredProducts = selectedCategory === 'all' 
-    ? MOCK_PRODUCTS 
-    : MOCK_PRODUCTS.filter(p => p.category === selectedCategory);
+    ? products 
+    : products.filter(p => p.category === selectedCategory);
 
   return (
     <div className="h-[calc(100vh-64px)] relative flex flex-col md:flex-row overflow-hidden bg-slate-50">
@@ -120,17 +121,17 @@ export const MapView = () => {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <LocationMarker shouldLocate={shouldLocate} />
-          {filteredProducts.map(product => (
+          {filteredProducts.filter(p => p.location?.lat && p.location?.lng).map(product => (
             <Marker key={product.id} position={[product.location.lat, product.location.lng]}>
               <Popup className="sleek-popup">
                 <div className="w-56 p-2">
                    <div className="overflow-hidden rounded-xl h-28 mb-3">
-                    <img src={product.images[0]} className="w-full h-full object-cover" alt="" />
+                    <img src={product.images?.[0] || 'https://images.unsplash.com/photo-1595111028886-df9b824d395a?w=800&q=80'} className="w-full h-full object-cover" alt="" />
                    </div>
                    <h3 className="font-black text-slate-900 text-sm mb-1 line-clamp-1">{product.name}</h3>
                    <div className="flex items-center text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
                       <MapPin className="w-3 h-3 mr-1 text-primary-light" />
-                      <span>{product.location.city}</span>
+                      <span>{product.location?.city || 'Cameroun'}</span>
                    </div>
                    <div className="flex items-center justify-between pt-3 border-t border-slate-50">
                       <span className="font-black text-primary-dark text-lg tracking-tighter">{formatPrice(product.price)}</span>
@@ -156,7 +157,7 @@ export const MapView = () => {
                <Layers className="w-5 h-5 text-slate-400" />
             </div>
          </div>
-         <div className="space-y-6">
+          <div className="space-y-6">
             {filteredProducts.map(p => (
                <Link 
                 to={`/products/${p.id}`}
@@ -164,7 +165,7 @@ export const MapView = () => {
                 className="group flex gap-5 p-4 rounded-[1.5rem] hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100 items-center overflow-hidden"
                >
                   <div className="w-24 h-24 rounded-2xl overflow-hidden shrink-0 shadow-lg shadow-slate-200/50">
-                    <img src={p.images[0]} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="" />
+                    <img src={p.images?.[0] || 'https://images.unsplash.com/photo-1595111028886-df9b824d395a?w=800&q=80'} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="" />
                   </div>
                   <div className="flex-1 min-w-0">
                      <div className="flex items-center space-x-2 mb-1">
@@ -173,7 +174,7 @@ export const MapView = () => {
                      <h4 className="font-black text-slate-900 truncate group-hover:text-primary-dark transition-colors tracking-tight">{p.name}</h4>
                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center mt-1">
                         <MapPin className="w-3 h-3 mr-1 text-primary-light" />
-                        {p.location.city}
+                        {p.location?.city || 'Cameroun'}
                      </p>
                      <div className="mt-3 flex items-center justify-between">
                         <p className="font-black text-lg text-primary-dark tracking-tighter">{formatPrice(p.price)}</p>

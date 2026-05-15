@@ -12,7 +12,7 @@ import {
   TrendingUp,
   Sparkles
 } from 'lucide-react';
-import { CATEGORIES } from '../../services/mock/mockData';
+import { CATEGORIES } from '../../core/constants';
 import { RecommendationService } from '../../core/services/recommendationService';
 import { motion } from 'motion/react';
 import { formatPrice } from '../../shared/utils';
@@ -284,7 +284,7 @@ const ProductCard = (props: any) => {
     <div className="bg-white rounded-[2.5rem] overflow-hidden shadow-xl shadow-slate-200/40 border border-slate-200 hover:border-primary-light transition-all duration-500 flex flex-col h-full overflow-hidden">
       <div className="relative aspect-square overflow-hidden">
         <img 
-          src={product.images[0]} 
+          src={product.images?.[0] || 'https://images.unsplash.com/photo-1595111028886-df9b824d395a?w=800&q=80'} 
           alt={product.name}
           className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
         />
@@ -302,7 +302,7 @@ const ProductCard = (props: any) => {
       <div className="p-8 flex flex-col flex-grow bg-white">
         <div className="flex items-center gap-2 mb-2">
           <MapPin className="w-3 h-3 text-slate-400" />
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{product.location.city}</span>
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{product.location?.city || 'Cameroun'}</span>
         </div>
         <h3 className="font-black text-xl text-slate-900 group-hover:text-primary-dark transition-colors line-clamp-1 tracking-tight mb-2">{product.name}</h3>
         <p className="text-sm text-slate-400 line-clamp-2 mb-8 leading-relaxed font-medium">{product.description}</p>

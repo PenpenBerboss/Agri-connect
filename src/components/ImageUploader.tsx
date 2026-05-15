@@ -21,21 +21,28 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ bucket, onUpload, 
       if (!file) return;
 
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from(bucket)
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Upload error details:', uploadError);
+        throw uploadError;
+      }
 
       const { data } = supabase.storage.from(bucket).getPublicUrl(filePath);
+      console.log('Generated Public URL:', data.publicUrl);
       setPreview(data.publicUrl);
       onUpload(data.publicUrl);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading image:', error);
-      alert('Erreur lors du téléchargement de l\'image.');
+      alert(`Erreur: ${error.message || 'Problème lors du téléchargement'}`);
     } finally {
       setUploading(false);
     }

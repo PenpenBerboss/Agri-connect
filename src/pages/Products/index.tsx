@@ -12,7 +12,7 @@ import {
   MoveRight,
   Heart
 } from 'lucide-react';
-import { MOCK_PRODUCTS, CATEGORIES, CAMEROON_CITIES } from '../../services/mock/mockData';
+import { CATEGORIES, CAMEROON_CITIES } from '../../core/constants';
 import { formatPrice, cn } from '../../shared/utils';
 import { Category } from '../../core/types';
 import { motion, AnimatePresence } from 'motion/react';
@@ -29,24 +29,24 @@ export const Products = () => {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000]);
   const [sortBy, setSortBy] = useState<'newest' | 'price-asc' | 'price-desc' | 'popular'>('newest');
   const [showFilters, setShowFilters] = useState(false);
-  const { toggleFavorite, isFavorite } = useStore();
+  const { toggleFavorite, isFavorite, products } = useStore();
 
   const filteredProducts = useMemo(() => {
-    return MOCK_PRODUCTS.filter(p => {
-      const matchesSearch = p.name.toLowerCase().includes(query.toLowerCase()) || 
-                           p.description.toLowerCase().includes(query.toLowerCase());
+    return products.filter(p => {
+      const matchesSearch = (p.name?.toLowerCase() || '').includes(query.toLowerCase()) || 
+                           (p.description?.toLowerCase() || '').includes(query.toLowerCase());
       const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
-      const matchesCity = selectedCity === 'all' || p.location.city === selectedCity;
+      const matchesCity = selectedCity === 'all' || p.location?.city === selectedCity;
       const matchesPrice = p.price >= priceRange[0] && p.price <= priceRange[1];
       
       return matchesSearch && matchesCategory && matchesCity && matchesPrice;
     }).sort((a, b) => {
       if (sortBy === 'price-asc') return a.price - b.price;
       if (sortBy === 'price-desc') return b.price - a.price;
-      if (sortBy === 'popular') return b.views - a.views;
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      if (sortBy === 'popular') return (b.views || 0) - (a.views || 0);
+      return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
     });
-  }, [query, selectedCategory, priceRange, sortBy]);
+  }, [query, selectedCategory, selectedCity, priceRange, sortBy, products]);
 
   return (
     <div className="min-h-screen bg-slate-50 pt-12 pb-24">
@@ -197,7 +197,7 @@ export const Products = () => {
                      <div className="card-sleek flex flex-col h-full bg-white overflow-hidden rounded-[2rem] border border-slate-200 hover:border-primary-light transition-all duration-500">
                         <Link to={`/products/${product.id}`} className="relative aspect-[4/3] block overflow-hidden">
                            <img 
-                             src={product.images[0]} 
+                             src={product.images?.[0] || 'https://images.unsplash.com/photo-1595111028886-df9b824d395a?w=800&q=80'} 
                              alt={product.name}
                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                            />
@@ -227,11 +227,11 @@ export const Products = () => {
                               <div className="flex items-center space-x-1 text-accent">
                                  <Star className="w-3.5 h-3.5 fill-current" />
                                  <span className="text-xs font-black">{product.rating}</span>
-                                 <span className="text-slate-400 text-[10px] font-bold uppercase ml-1">({product.reviewsCount})</span>
+                                 <span className="text-slate-400 text-[10px] font-bold uppercase ml-1">({product.reviews_count})</span>
                               </div>
                               <div className="flex items-center text-slate-400 font-bold text-[10px] uppercase tracking-wider">
                                  <LocateFixed className="w-3 h-3 mr-1" />
-                                 <span>{product.location.city}</span>
+                                 <span>{product.location?.city || 'Cameroun'}</span>
                               </div>
                            </div>
 

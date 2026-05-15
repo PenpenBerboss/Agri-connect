@@ -1,6 +1,5 @@
 import React from 'react';
 import { useStore } from '../../application/store/useStore';
-import { MOCK_ORDERS } from '../../services/mock/mockData';
 import { formatPrice, cn } from '../../shared/utils';
 import { 
   ShoppingBag, 
@@ -16,10 +15,16 @@ import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 
 export const BuyerProfile = () => {
-  const { user, logout, favorites } = useStore();
+  const { user, logout, favorites, orders, fetchOrders } = useStore();
+
+  React.useEffect(() => {
+    if (orders.length === 0) fetchOrders();
+  }, [fetchOrders, orders.length]);
+
+  const userOrders = orders.filter(o => o.customer_id === user?.id);
 
   const menuItems = [
-    { icon: ShoppingBag, label: 'Mes Commandes', count: MOCK_ORDERS.length, path: '/cart' },
+    { icon: ShoppingBag, label: 'Mes Commandes', count: userOrders.length, path: '/cart' },
     { icon: Heart, label: 'Mes Favoris', count: favorites.length, path: '/favorites' },
     { icon: Settings2, label: 'Paramètres', path: '#' },
   ];
@@ -31,7 +36,7 @@ export const BuyerProfile = () => {
         <div className="bg-white rounded-[3rem] p-10 border border-slate-200 shadow-xl shadow-slate-200/50 flex flex-col md:flex-row items-center gap-8 mb-8">
           <div className="relative">
             <img 
-              src={user?.avatar} 
+              src={user?.avatar_url || `https://ui-avatars.com/api/?name=${user?.name}&background=random`} 
               alt={user?.name} 
               className="w-32 h-32 rounded-[2.5rem] bg-slate-100 object-cover border-4 border-slate-50 shadow-inner"
             />
@@ -48,7 +53,7 @@ export const BuyerProfile = () => {
                 Acheteur Certifié
               </span>
               <span className="bg-primary-light/10 text-primary-dark px-5 py-2 rounded-xl text-xs font-black uppercase tracking-widest border border-primary-light/10">
-                Membre depuis {user?.joinedAt}
+                Membre depuis {user?.joined_at ? new Date(user.joined_at).getFullYear() : '2024'}
               </span>
             </div>
           </div>
@@ -96,12 +101,12 @@ export const BuyerProfile = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {MOCK_ORDERS.map((order) => (
+                {userOrders.map((order) => (
                   <tr key={order.id}>
-                    <td className="px-6 py-4 text-sm font-bold">{order.id}</td>
-                    <td className="px-6 py-4 text-sm text-slate-500">{order.date}</td>
-                    <td className="px-6 py-4 text-sm font-bold text-slate-900">{order.productName}</td>
-                    <td className="px-6 py-4 text-sm">{order.quantity} {order.unit}</td>
+                    <td className="px-6 py-4 text-sm font-bold">#{order.id.split('-')[1] || order.id}</td>
+                    <td className="px-6 py-4 text-sm text-slate-500">{new Date(order.created_at).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 text-sm font-bold text-slate-900">{order.products?.name}</td>
+                    <td className="px-6 py-4 text-sm">{order.quantity} unités</td>
                     <td className="px-6 py-4 text-sm font-black">{formatPrice(order.amount)}</td>
                     <td className="px-6 py-4 text-sm">
                       <span className={cn(
@@ -128,14 +133,14 @@ export const BuyerProfile = () => {
           </div>
 
           <div className="space-y-4">
-            {MOCK_ORDERS.slice(0, 3).map((order) => (
-              <div key={order.id} className="flex items-center gap-6 p-6 rounded-3xl border border-slate-50 hover:border-slate-200 transition-all group">
+            {userOrders.slice(0, 3).map((order) => (
+              <Link to={`/orders/${order.id}`} key={order.id} className="flex items-center gap-6 p-6 rounded-3xl border border-slate-50 hover:border-slate-200 transition-all group">
                 <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-primary-light/20 group-hover:text-primary-dark transition-all">
                   <CircleCheckBig className="w-6 h-6" />
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-bold text-slate-900 line-clamp-1">{order.productName}</h4>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{order.date}</p>
+                  <h4 className="font-bold text-slate-900 line-clamp-1">{order.products?.name}</h4>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{new Date(order.created_at).toLocaleDateString()}</p>
                 </div>
                 <div className="text-right">
                   <p className="font-black text-slate-900">{formatPrice(order.amount)}</p>
@@ -147,7 +152,7 @@ export const BuyerProfile = () => {
                   </span>
                 </div>
                 <MoveRight className="w-5 h-5 text-slate-200 group-hover:text-slate-400" />
-              </div>
+              </Link>
             ))}
           </div>
         </div>

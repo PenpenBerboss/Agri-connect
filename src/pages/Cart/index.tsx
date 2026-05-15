@@ -1,17 +1,17 @@
 import React from 'react';
 import { useStore } from '../../application/store/useStore';
-import { MOCK_PRODUCTS } from '../../services/mock/mockData';
 import { Link, useNavigate } from 'react-router-dom';
 import { Trash2, Plus, Minus, ShoppingBag, MoveRight, ShieldCheck } from 'lucide-react';
 import { formatPrice, cn } from '../../shared/utils';
 import { motion } from 'motion/react';
+import { toast } from 'react-hot-toast';
 
 export const Cart = () => {
-  const { cart, removeFromCart, updateQuantity, clearCart } = useStore();
+  const { cart, removeFromCart, updateQuantity, clearCart, products } = useStore();
   const navigate = useNavigate();
 
   const cartProducts = cart.map(item => {
-    const product = MOCK_PRODUCTS.find(p => p.id === item.productId);
+    const product = products.find(p => p.id === item.productId);
     return { ...product, quantity: item.quantity };
   }).filter(p => p.id) as (any & { quantity: number })[];
 
@@ -48,7 +48,15 @@ export const Cart = () => {
           <div className="flex-1 space-y-8">
              <div className="flex justify-between items-end mb-4">
                 <h1 className="text-5xl font-black text-slate-900 tracking-tighter">Mon Panier</h1>
-                <button onClick={clearCart} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-rose-500 transition-colors">Vider le panier</button>
+                <button 
+                  onClick={() => {
+                    clearCart();
+                    toast.success('Panier vidé');
+                  }} 
+                  className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-rose-500 transition-colors"
+                >
+                  Vider le panier
+                </button>
              </div>
 
              <div className="space-y-6">
@@ -119,7 +127,20 @@ export const Cart = () => {
                 </div>
 
                 <button 
-                  onClick={() => alert('Procédure de paiement sécurisée en cours...')}
+                  onClick={async () => {
+                    try {
+                      // Mocking order placement
+                      toast.loading('Traitement de votre commande...', { id: 'order-loading' });
+                      await new Promise(resolve => setTimeout(resolve, 2000));
+                      clearCart();
+                      toast.dismiss('order-loading');
+                      toast.success('Commande passée avec succès !');
+                      navigate('/dashboard');
+                    } catch (err) {
+                      toast.dismiss('order-loading');
+                      toast.error('Erreur lors de la commande.');
+                    }
+                  }}
                   className="w-full bg-primary-dark hover:bg-primary-light text-white py-6 rounded-2xl font-black text-sm uppercase tracking-[0.2em] shadow-2xl shadow-primary-dark/20 transition-all active:scale-95"
                 >
                    Commander Maintenant

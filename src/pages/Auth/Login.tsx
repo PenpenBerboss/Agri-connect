@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { Mail, Lock, Eye, EyeOff, Leaf, MoveRight, Github, ShieldCheck } from 'lucide-react';
 import { useStore } from '../../application/store/useStore';
 import { motion } from 'motion/react';
+import { toast } from 'react-hot-toast';
 
 export const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -23,9 +24,10 @@ export const Login = () => {
          return;
       }
       await login(data.email, data.password);
+      toast.success('Connexion réussie !');
       navigate('/dashboard');
     } catch (error) {
-      alert('Erreur lors de la connexion');
+      toast.error('Erreur lors de la connexion');
     } finally {
       setIsLoading(false);
     }
@@ -108,7 +110,7 @@ export const Login = () => {
               </div>
               <label className="ml-3 block text-xs font-black text-slate-500 uppercase tracking-widest cursor-pointer group-hover:text-slate-900 transition-colors">Rester connecté</label>
             </div>
-            <Link to="/forgot-password" size-xs className="text-[10px] font-black uppercase tracking-widest text-primary-dark hover:text-primary-light transition-colors">Oubli ?</Link>
+            <Link to="/forgot-password" className="text-[10px] font-black uppercase tracking-widest text-primary-dark hover:text-primary-light transition-colors">Oubli ?</Link>
           </div>
 
           <button
@@ -129,10 +131,18 @@ export const Login = () => {
           </div>
 
           <div className="grid grid-cols-2 gap-6">
-            <button type="button" className="flex items-center justify-center gap-3 px-6 py-4 border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 bg-white/50 hover:bg-white hover:shadow-xl transition-all shadow-slate-200/50">
+            <button 
+              type="button" 
+              onClick={() => useStore.getState().signInWithGoogle()}
+              className="flex items-center justify-center gap-3 px-6 py-4 border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 bg-white/50 hover:bg-white hover:shadow-xl transition-all shadow-slate-200/50"
+            >
                <Github className="w-4 h-4" /> Google
             </button>
-            <button type="button" className="flex items-center justify-center gap-3 px-6 py-4 border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 bg-white/50 hover:bg-white hover:shadow-xl transition-all shadow-slate-200/50">
+            <button 
+              type="button" 
+              onClick={() => useStore.getState().signInWithFacebook()}
+              className="flex items-center justify-center gap-3 px-6 py-4 border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 bg-white/50 hover:bg-white hover:shadow-xl transition-all shadow-slate-200/50"
+            >
                Facebook
             </button>
           </div>

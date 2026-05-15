@@ -16,11 +16,11 @@ import {
 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { MOCK_PRODUCTS } from '../../services/mock/mockData';
 import { formatPrice, cn } from '../../shared/utils';
 import { useStore } from '../../application/store/useStore';
 import { motion, AnimatePresence } from 'motion/react';
 import { RecommendationService } from '../../core/services/recommendationService';
+import { toast } from 'react-hot-toast';
 
 // Fix Leaflet icon issue
 import L from 'leaflet';
@@ -39,18 +39,21 @@ L.Marker.prototype.options.icon = DefaultIcon;
 export const ProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, toggleFavorite, isFavorite, addToCart } = useStore();
-  const product = MOCK_PRODUCTS.find(p => p.id === id);
+  const { user, toggleFavorite, isFavorite, addToCart, products } = useStore();
+  const product = products.find(p => p.id === id);
   
   const similarProducts = product ? RecommendationService.getRecommendedProducts(4, user?.id, product) : [];
-  const nearbyProducts = product ? RecommendationService.getNearbyProducts(product.location.lat, product.location.lng, 4).filter(p => p.id !== product.id) : [];
+  const nearbyProducts = product ? RecommendationService.getNearbyProducts(product.location?.lat || 4.05, product.location?.lng || 9.71, 4).filter(p => p.id !== product.id) : [];
+  const trendingProducts = RecommendationService.getTrendingProducts(4).filter(p => p.id !== id);
 
   const [activeImage, setActiveImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const { recordProductView } = useStore();
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    if (id) recordProductView(id);
     // Simulation de géolocalisation pour le calcul hybride (Douala par défaut)
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
@@ -66,6 +69,16 @@ export const ProductDetails = () => {
   }, [id]);
 
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const { reviews, fetchReviews, addReview } = useStore();
+  const [userRating, setUserRating] = useState(5);
+  const [comment, setComment] = useState('');
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
+  const productReviews = reviews.filter(r => r.product_id === id);
+
+  useEffect(() => {
+    fetchReviews(id);
+  }, [fetchReviews, id]);
 
   if (!product) {
     return (
@@ -80,6 +93,22 @@ export const ProductDetails = () => {
     );
   }
 
+  const handleFavorite = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    try {
+      if (!id) return;
+      await toggleFavorite(id);
+      if (!isFavorite(id)) {
+        toast.success("Ajouté aux favoris", { icon: '❤️' });
+      } else {
+        toast.success("Retiré des favoris");
+      }
+    } catch (err) {
+      toast.error("Erreur favoris");
+    }
+  };
+
   const handleWhatsApp = () => {
     const message = `Bonjour, je suis intéressé par votre produit "${product.name}" sur AgriConnect.`;
     window.open(`https://wa.me/237670000000?text=${encodeURIComponent(message)}`, '_blank');
@@ -87,7 +116,7 @@ export const ProductDetails = () => {
 
   const handleAddToCart = () => {
     addToCart(product.id, quantity);
-    // Optional: show a toast or feedback
+    toast.success(`${product.name} ajouté au panier !`);
   };
 
   return (
@@ -106,7 +135,7 @@ export const ProductDetails = () => {
           <div className="flex items-center space-x-3">
              <button className="p-3 bg-white border border-slate-200 rounded-2xl hover:text-primary-dark transition-all shadow-sm"><Share2 className="w-5 h-5" /></button>
              <button 
-                onClick={() => toggleFavorite(product.id)}
+                onClick={handleFavorite}
                 className={cn(
                   "p-3 border transition-all shadow-sm rounded-2xl",
                   isFavorite(product.id) ? "bg-accent border-accent text-white" : "bg-white border-slate-200 text-slate-400 hover:text-accent hover:border-accent"
@@ -125,13 +154,13 @@ export const ProductDetails = () => {
                 key={activeImage}
                 initial={{ opacity: 0, scale: 1.1 }}
                 animate={{ opacity: 1, scale: 1 }}
-                src={product.images[activeImage]} 
+                src={product.images?.[activeImage] || 'https://images.unsplash.com/photo-1595111028886-df9b824d395a?w=800&q=80'} 
                 alt={product.name}
                 className="w-full h-full object-cover transition-all duration-700"
                />
             </div>
             <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide no-scrollbar">
-              {product.images.map((img, idx) => (
+              {product.images?.map((img, idx) => (
                 <button 
                   key={idx}
                   onClick={() => setActiveImage(idx)}
@@ -165,12 +194,12 @@ export const ProductDetails = () => {
                 <div className="flex items-center text-accent">
                   <Star className="w-5 h-5 fill-current" />
                   <span className="ml-2 font-black text-slate-900 text-lg">{product.rating}</span>
-                  <span className="ml-1 text-sm text-slate-400 font-bold">({product.reviewsCount} avis clients)</span>
+                  <span className="ml-1 text-sm text-slate-400 font-bold">({product.reviews_count} avis clients)</span>
                 </div>
                 <div className="h-6 w-px bg-slate-200" />
                 <div className="flex items-center text-slate-500 font-bold text-sm">
                   <MapPin className="w-5 h-5 mr-1.5 text-primary-light" />
-                  <span>{product.location.city}, {product.location.region}</span>
+                  <span>{product.location?.city || 'Douala'}, {product.location?.region || 'Littoral'}</span>
                 </div>
               </div>
             </div>
@@ -242,7 +271,7 @@ export const ProductDetails = () => {
                   <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex items-start gap-3">
                     <ShieldCheck className="w-5 h-5 text-primary-dark shrink-0 mt-0.5" />
                     <p className="text-xs font-bold text-slate-500 uppercase tracking-wider leading-relaxed">
-                      Qualité certifiée par AgriConnect Cameroon. Fraîcheur garantie sous 24h après récolte.
+                      Fraîcheur garantie sous 24h après récolte.
                     </p>
                   </div>
                </div>
@@ -251,16 +280,16 @@ export const ProductDetails = () => {
             {/* Seller Experience */}
             <div className="bg-slate-950 text-white p-8 rounded-[2.5rem] flex items-center gap-6 shadow-2xl">
                <div className="relative">
-                <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${product.sellerName}`} className="w-20 h-20 rounded-full bg-white/10 p-1 border-2 border-primary-light" alt="vendeur" />
+                <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${product.seller_name}`} className="w-20 h-20 rounded-full bg-white/10 p-1 border-2 border-primary-light" alt="vendeur" />
                 <div className="absolute -bottom-1 -right-1 bg-blue-500 p-1 rounded-full border-2 border-slate-950">
                   <ShieldCheck className="w-3 h-3 text-white" />
                 </div>
                </div>
                <div className="flex-1">
-                  <h4 className="font-black text-xl tracking-tight leading-none mb-2">{product.sellerName}</h4>
+                  <h4 className="font-black text-xl tracking-tight leading-none mb-2">{product.seller_name}</h4>
                   <p className="text-[10px] text-primary-light font-bold uppercase tracking-[0.2em]">Producteur Master Class • 120+ Ventes</p>
                </div>
-               <Link to={`/seller/${product.sellerId}`} className="bg-white/10 hover:bg-white/20 text-white w-12 h-12 rounded-2xl flex items-center justify-center transition-all">
+               <Link to={`/seller/${product.seller_id}`} className="bg-white/10 hover:bg-white/20 text-white w-12 h-12 rounded-2xl flex items-center justify-center transition-all">
                   <MoveRight className="w-5 h-5" />
                </Link>
             </div>
@@ -278,14 +307,14 @@ export const ProductDetails = () => {
            </div>
            
            <div className="h-[500px] rounded-[3.5rem] overflow-hidden border-8 border-white shadow-2xl relative">
-             <MapContainer center={[product.location.lat, product.location.lng]} zoom={13} scrollWheelZoom={false} className="h-full w-full">
+             <MapContainer center={[product.location?.lat || 4.05, product.location?.lng || 9.71]} zoom={13} scrollWheelZoom={false} className="h-full w-full">
                 <TileLayer
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
-                <Marker position={[product.location.lat, product.location.lng]}>
+                <Marker position={[product.location?.lat || 4.05, product.location?.lng || 9.71]}>
                   <Popup className="sleek-popup">
-                    <div className="p-2 font-bold text-slate-900">{product.name} @ {product.location.city}</div>
+                    <div className="p-2 font-bold text-slate-900">{product.name} @ {product.location?.city || 'Douala'}</div>
                   </Popup>
                 </Marker>
              </MapContainer>
@@ -293,9 +322,9 @@ export const ProductDetails = () => {
              {/* Map Glass Overlay */}
              <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-white/70 backdrop-blur-md px-10 py-5 rounded-3xl border border-white/50 shadow-2xl z-[1000] hidden md:block">
                <div className="flex items-center space-x-6 text-slate-900 font-bold text-sm uppercase tracking-widest">
-                  <div className="flex items-center gap-2"><MapPin className="w-4 h-4 text-primary-dark" /> {product.location.city}</div>
+                  <div className="flex items-center gap-2"><MapPin className="w-4 h-4 text-primary-dark" /> {product.location?.city || 'Douala'}</div>
                   <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
-                  <div className="flex items-center gap-2">{product.location.region}</div>
+                  <div className="flex items-center gap-2">{product.location?.region || 'Littoral'}</div>
                </div>
              </div>
            </div>
@@ -320,12 +349,27 @@ export const ProductDetails = () => {
         <section className="mt-32">
            <div className="flex items-end justify-between mb-12">
               <div>
-                <h2 className="text-4xl font-black text-slate-900 tracking-tighter">Également à {product.location.city}</h2>
+                <h2 className="text-4xl font-black text-slate-900 tracking-tighter">Également à {product.location?.city || 'proximité'}</h2>
                 <p className="text-slate-500 font-medium mt-2">Profitez de votre déplacement pour récupérer d'autres récoltes.</p>
               </div>
            </div>
            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {nearbyProducts.map(p => (
+                <ProductSmallCard key={p.id} p={p} />
+              ))}
+           </div>
+        </section>
+
+        {/* Trending Products */}
+        <section className="mt-32">
+           <div className="flex items-end justify-between mb-12">
+              <div>
+                <h2 className="text-4xl font-black text-slate-900 tracking-tighter">Tendances Actuelles</h2>
+                <p className="text-slate-500 font-medium mt-2">Les produits les plus consultés en ce moment.</p>
+              </div>
+           </div>
+           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {trendingProducts.map(p => (
                 <ProductSmallCard key={p.id} p={p} />
               ))}
            </div>
@@ -342,7 +386,7 @@ export const ProductDetails = () => {
                   ))}
                 </div>
                 <span className="font-black text-slate-900">{product.rating}/5</span>
-                <span className="ml-2 text-slate-400 font-bold text-sm">({product.reviewsCount} retours)</span>
+                <span className="ml-2 text-slate-400 font-bold text-sm">({product.reviews_count} retours)</span>
               </div>
            </div>
 
@@ -355,8 +399,15 @@ export const ProductDetails = () => {
                          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Votre note</p>
                          <div className="flex gap-2">
                            {[1,2,3,4,5].map(i => (
-                             <button key={i} className="w-10 h-10 rounded-xl bg-slate-50 hover:bg-primary-light/10 text-slate-200 hover:text-accent transition-all flex items-center justify-center">
-                               <Star className="w-6 h-6" />
+                             <button 
+                               key={i} 
+                               onClick={() => setUserRating(i)}
+                               className={cn(
+                                 "w-10 h-10 rounded-xl bg-slate-50 transition-all flex items-center justify-center",
+                                 i <= userRating ? "text-accent bg-accent/5" : "text-slate-200 hover:text-accent"
+                               )}
+                             >
+                               <Star className={cn("w-6 h-6", i <= userRating && "fill-current")} />
                              </button>
                            ))}
                          </div>
@@ -365,11 +416,34 @@ export const ProductDetails = () => {
                          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Commentaire</p>
                          <textarea 
                            placeholder="Partagez votre expérience avec ce produit..."
+                           value={comment}
+                           onChange={(e) => setComment(e.target.value)}
                            className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-medium focus:ring-4 focus:ring-primary-light/10 transition-all outline-none min-h-[120px]"
                          ></textarea>
                        </div>
-                       <button className="w-full bg-primary-dark text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg shadow-primary-dark/20 active:scale-95 transition-all">
-                         Publier l'avis
+                       <button 
+                         disabled={isSubmittingReview}
+                         onClick={async () => {
+                           if (!comment.trim()) return toast.error("Le commentaire est vide");
+                           setIsSubmittingReview(true);
+                           try {
+                             await addReview({
+                               product_id: product.id,
+                               rating: userRating,
+                               comment
+                             });
+                             setComment('');
+                             toast.success("Avis publié !");
+                             fetchReviews(product.id);
+                           } catch (err) {
+                             toast.error("Erreur d'envoi");
+                           } finally {
+                             setIsSubmittingReview(false);
+                           }
+                         }}
+                         className="w-full bg-primary-dark text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg shadow-primary-dark/20 active:scale-95 transition-all disabled:opacity-50"
+                       >
+                         {isSubmittingReview ? "Envoi..." : "Publier l'avis"}
                        </button>
                     </div>
                  </div>
@@ -393,7 +467,7 @@ export const ProductDetails = () => {
                          </div>
                       </div>
                       <p className="text-slate-600 font-medium leading-relaxed">
-                        Produit d'excellente qualité ! {product.name} est frais et correspond parfaitement à la description. Livraison rapide à {product.location.city}.
+                        Produit d'excellente qualité ! {product.name} est frais et correspond parfaitement à la description. Livraison rapide à {product.location?.city || 'destination'}.
                       </p>
                    </div>
                  ))}
@@ -422,7 +496,7 @@ export const ProductDetails = () => {
                   <div className="flex justify-between items-start mb-8">
                     <div>
                       <h2 className="text-3xl font-black text-slate-900 tracking-tight">Contacter le Vendeur</h2>
-                      <p className="text-slate-400 font-medium">Envoyez un message direct à {product.sellerName}.</p>
+                      <p className="text-slate-400 font-medium">Envoyez un message direct à {product.seller_name}.</p>
                     </div>
                     <button onClick={() => setIsContactModalOpen(false)} className="p-3 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-colors">
                       <X className="w-6 h-6" />
@@ -481,17 +555,18 @@ export const ProductDetails = () => {
   );
 };
 
-const ProductSmallCard = ({ p }: { p: any }) => (
+const ProductSmallCard = ({ p, ...props }: { p: any, [key: string]: any }) => (
   <Link 
     to={`/products/${p.id}`}
+    {...props}
     className="bg-white rounded-[2rem] p-6 hover:shadow-2xl hover:border-primary-light border border-slate-200 transition-all group flex flex-col"
   >
     <div className="overflow-hidden rounded-2xl aspect-square mb-6">
-      <img src={p.images[0]} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={p.name} />
+      <img src={p.images?.[0] || 'https://images.unsplash.com/photo-1595111028886-df9b824d395a?w=800&q=80'} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={p.name} />
     </div>
     <div className="flex items-center gap-1.5 mb-1">
       <MapPin className="w-3 h-3 text-slate-300" />
-      <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{p.location.city}</span>
+      <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{p.location?.city || 'Douala'}</span>
     </div>
     <h4 className="font-extrabold text-slate-900 group-hover:text-primary-dark transition-colors truncate tracking-tight">{p.name}</h4>
     <div className="mt-6 flex items-center justify-between gap-4 border-t border-slate-50 pt-6">

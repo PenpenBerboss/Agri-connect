@@ -13,6 +13,9 @@ import { Favorites } from './pages/Favorites';
 import { Cart } from './pages/Cart';
 import { AdminDashboard } from './pages/Dashboard/AdminDashboard';
 import { SellerProfile } from './pages/SellerProfile';
+import { ReportsTab } from './pages/Dashboard/ReportsTab';
+import { OrderDetails } from './pages/Dashboard/OrderDetails';
+import { Toaster } from 'react-hot-toast';
 import { useStore } from './application/store/useStore';
 
 // Protected Route Component
@@ -25,13 +28,25 @@ const ProtectedRoute = ({ children, adminOnly = false }: { children: React.React
 
 const DashboardContainer = () => {
   const { user } = useStore();
-  if (user?.role === 'admin') return <AdminDashboard />;
-  return user?.role === 'farmer' ? <Dashboard /> : <BuyerProfile />;
+  if (user?.role === 'admin' || user?.role === 'farmer') return <Dashboard />;
+  return <BuyerProfile />;
 };
 
 export default function App() {
+  const { checkAuth, fetchProducts, fetchOrders } = useStore();
+
+  React.useEffect(() => {
+    fetchProducts();
+    fetchOrders();
+  }, [fetchProducts, fetchOrders]);
+
+  React.useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
   return (
     <BrowserRouter>
+      <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
       <Routes>
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Home />} />
@@ -50,6 +65,12 @@ export default function App() {
           <Route path="dashboard/*" element={
             <ProtectedRoute>
               <DashboardContainer />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="orders/:id" element={
+            <ProtectedRoute>
+               <OrderDetails />
             </ProtectedRoute>
           } />
 

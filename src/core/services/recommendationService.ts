@@ -1,5 +1,5 @@
 import { Product, User } from '../types';
-import { MOCK_PRODUCTS, MOCK_HISTORY, MOCK_USERS } from '../../services/mock/mockData';
+import { useStore } from '../../application/store/useStore';
 
 /**
  * Advanced Hybrid Recommendation Service for AgriConnect Cameroon
@@ -13,36 +13,43 @@ export class RecommendationService {
     userId: string | null,
     contextProduct?: Product
   ): number {
-    const user = userId ? MOCK_USERS.find(u => u.id === userId) : null;
-    let score = 0;
-
-    // 1. Content Similarity (0.4)
+    const user = useStore.getState().user;
+    
+    // 1. Content Scoring (Max 50 points) - 0.5 weight
+    let contentScore = 0;
     if (contextProduct) {
-      if (product.category === contextProduct.category) score += 40;
-      if (product.subcategory === (contextProduct as any).subcategory) score += 20;
+      if (product.category === contextProduct.category) contentScore += 30;
+      if (product.subcategory && contextProduct.subcategory && product.subcategory === contextProduct.subcategory) contentScore += 10;
+      if (product.product_type && contextProduct.product_type && product.product_type === contextProduct.product_type) contentScore += 5;
+      
+      const commonKeywords = (product.keywords || []).filter(k => (contextProduct.keywords || []).includes(k));
+      contentScore += Math.min(commonKeywords.length * 1, 5); 
+    } else if (user?.preferred_categories?.includes(product.category)) {
+      contentScore += 40;
     }
 
-    // 2. Collaborative Filtering (0.3)
-    // Find if other users who liked contextProduct also liked this product
-    if (contextProduct && MOCK_HISTORY) {
-      const coOccurrences = MOCK_HISTORY.filter(h => 
-        h.product_id === product.id && 
-        MOCK_HISTORY.find(h2 => h2.product_id === contextProduct.id && h2.user_id === h.user_id)
-      ).length;
-      score += Math.min(coOccurrences * 2, 30);
+    // 2. Popularity Scoring (Max 30 points) - 0.3 weight
+    let popularityScore = 0;
+    popularityScore += (product.rating || 0) * 3; // Max 15
+    popularityScore += Math.min(Math.log10((product.views || 0) + 1) * 3, 10); // Max 10
+    popularityScore += Math.min((product.reviews_count || 0) * 1, 5); // Max 5
+
+    // 3. Geographic Scoring (Max 20 points) - 0.2 weight
+    let geoScore = 0;
+    const userLat = user?.location?.lat || user?.lat || 4.05;
+    const userLng = user?.location?.lng || user?.lng || 9.71;
+    const targetLat = contextProduct ? contextProduct.location.lat : userLat;
+    const targetLng = contextProduct ? contextProduct.location.lng : userLng;
+    
+    if (product.location) {
+      const dist = Math.sqrt(
+        Math.pow(targetLat - product.location.lat, 2) + 
+        Math.pow(targetLng - product.location.lng, 2)
+      );
+      geoScore = Math.max(0, 20 - dist * 100);
     }
 
-    // 3. Popularity & Quality (0.2)
-    score += (product.rating || 0) * 4;
-    score += Math.min((product.views || 0) / 100, 10);
-
-    // 4. Geographic Proximity (0.1)
-    if (user && user.location) {
-      const dist = Math.sqrt(Math.pow(user.location.lat - product.location.lat, 2) + Math.pow(user.location.lng - product.location.lng, 2));
-      score += Math.max(0, 10 - dist * 20);
-    }
-
-    return score;
+    return contentScore + popularityScore + geoScore;
   }
 
   static getRecommendedProducts(
@@ -50,7 +57,8 @@ export class RecommendationService {
     userId?: string,
     contextProduct?: Product
   ): Product[] {
-    return [...MOCK_PRODUCTS]
+    const products = useStore.getState().products;
+    return [...products]
       .filter(p => !contextProduct || p.id !== contextProduct.id)
       .sort((a, b) => {
         const scoreA = this.calculateHybridScore(a, userId || null, contextProduct);
@@ -61,8 +69,10 @@ export class RecommendationService {
   }
 
   static getNearbyProducts(lat: number, lng: number, limit: number = 4): Product[] {
-    return [...MOCK_PRODUCTS]
+    const products = useStore.getState().products;
+    return [...products]
       .sort((a, b) => {
+        if (!a.location || !b.location) return 0;
         const distA = Math.sqrt(Math.pow(lat - a.location.lat, 2) + Math.pow(lng - a.location.lng, 2));
         const distB = Math.sqrt(Math.pow(lat - b.location.lat, 2) + Math.pow(lng - b.location.lng, 2));
         return distA - distB;
@@ -71,15 +81,16 @@ export class RecommendationService {
   }
 
   static getTrendingProducts(limit: number = 4): Product[] {
-    return [...MOCK_PRODUCTS]
+    const products = useStore.getState().products;
+    return [...products]
       .sort((a, b) => (b.views || 0) - (a.views || 0))
       .slice(0, limit);
   }
 
   static getPersonalRecommendations(userId: string, limit: number = 6): Product[] {
-    const user = MOCK_USERS.find(u => u.id === userId);
+    const products = useStore.getState().products;
     // Use hybrid scoring for all products and take top
-    return [...MOCK_PRODUCTS]
+    return [...products]
       .sort((a, b) => {
         const scoreA = this.calculateHybridScore(a, userId, undefined);
         const scoreB = this.calculateHybridScore(b, userId, undefined);

@@ -41,5 +41,27 @@ export const authService = {
   getCurrentUser: async () => {
     const { data: { user } } = await supabase.auth.getUser();
     return user;
+  },
+
+  signInWithGoogle: async () => {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`
+      }
+    });
+    if (error) throw error;
+    return data;
+  },
+
+  signInWithFacebook: async () => {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'facebook',
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`
+      }
+    });
+    if (error) throw error;
+    return data;
   }
 };

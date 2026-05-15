@@ -6,6 +6,7 @@ import { useStore } from '../../application/store/useStore';
 import { motion } from 'motion/react';
 import { cn } from '../../shared/utils';
 import { Modal } from '../../components/ui/Modal';
+import { toast } from 'react-hot-toast';
 
 export const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -18,16 +19,16 @@ export const Register = () => {
   const onSubmit = async (data: any) => {
     setIsLoading(true);
     try {
+      await registerUser({ ...data, role });
+      toast.success('Compte créé avec succès !');
       if (role === 'farmer') {
-        const pending = JSON.parse(localStorage.getItem('AGR_PENDING_SELLERS') || '[]');
-        localStorage.setItem('AGR_PENDING_SELLERS', JSON.stringify([...pending, { ...data, role }]));
         setShowModal(true);
       } else {
-        await registerUser({ ...data, role });
         navigate('/dashboard');
       }
     } catch (error) {
-       alert('Erreur inscription');
+       console.error("Erreur inscription:", error);
+       toast.error('Erreur lors de l’inscription');
     } finally {
       setIsLoading(false);
     }

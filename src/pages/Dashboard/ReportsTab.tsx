@@ -23,18 +23,91 @@ import {
   Pie,
   Cell
 } from 'recharts';
-import { MOCK_STATS } from '../../services/mock/mockData';
+import { useStore } from '../../application/store/useStore';
 import { formatPrice, cn } from '../../shared/utils';
 
 const COLORS = ['#4CAF50', '#8BC34A', '#CDDC39', '#FFC107'];
 
+import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
+import * as XLSX from 'xlsx';
+
 export const ReportsTab = () => {
-  const pieData = [
-    { name: 'Cacao', value: 45 },
-    { name: 'Café', value: 25 },
-    { name: 'Manioc', value: 20 },
-    { name: 'Autres', value: 10 },
-  ];
+  const { orders, user, products, fetchOrders } = useStore();
+
+  const handleExport = (format: 'pdf' | 'csv' | 'excel') => {
+    const data = userOrders.map(o => ({
+      ID: o.id,
+      Date: new Date(o.created_at).toLocaleDateString(),
+      Produit: o.products?.name,
+      Quantite: o.quantity,
+      Montant: o.amount,
+      Status: o.status
+    }));
+
+    if (format === 'csv') {
+      const csvContent = "data:text/csv;charset=utf-8," 
+        + ["ID,Date,Produit,Quantite,Montant,Status", ...data.map(row => Object.values(row).join(","))].join("\n");
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `rapport_agriconnect_${new Date().getTime()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+    } else if (format === 'excel') {
+      const worksheet = XLSX.utils.json_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Rapport");
+      XLSX.writeFile(workbook, `rapport_agriconnect_${new Date().getTime()}.xlsx`);
+    } else if (format === 'pdf') {
+      const doc = new jsPDF() as any;
+      doc.text("Rapport de Performance - AgriConnect Cameroon", 14, 15);
+      doc.autoTable({
+        startY: 20,
+        head: [['ID', 'Date', 'Produit', 'Quantité', 'Montant', 'Status']],
+        body: data.map(o => [o.ID, o.Date, o.Produit, o.Quantite, o.Montant, o.Status]),
+      });
+      doc.save(`rapport_agriconnect_${new Date().getTime()}.pdf`);
+    }
+  };
+
+  React.useEffect(() => {
+    if (orders.length === 0) fetchOrders();
+  }, [fetchOrders, orders.length]);
+
+  const userProducts = products.filter(p => p.seller_id === user?.id);
+  const userOrders = orders.filter(o => o.seller_id === user?.id || o.product_id && userProducts.some(p => p.id === o.product_id));
+
+  // Generate dynamic chart data based on userOrders
+  const getChartData = () => {
+     if (userOrders.length === 0) return [{ name: 'Vide', sales: 0, products: 0 }];
+     
+     const grouped: Record<string, { sales: number; products: number }> = {};
+     userOrders.forEach(o => {
+        const date = new Date(o.created_at);
+        const monthName = date.toLocaleDateString('fr-FR', { month: 'short' });
+        if (!grouped[monthName]) grouped[monthName] = { sales: 0, products: 0 };
+        grouped[monthName].sales += Number(o.amount || 0);
+        grouped[monthName].products += Number(o.quantity || 1);
+     });
+     
+     return Object.keys(grouped).map(key => ({ name: key, ...grouped[key] }));
+  };
+  const dynamicStats = getChartData();
+
+  const getPieData = () => {
+    if (userOrders.length === 0) return [{ name: 'Vide', value: 100 }];
+    const categoryAgg: Record<string, number> = {};
+    userOrders.forEach(o => {
+       const cat = o.products?.category || 'Autres';
+       categoryAgg[cat] = (categoryAgg[cat] || 0) + Number(o.amount || 0);
+    });
+    return Object.keys(categoryAgg).map(key => ({ name: key, value: categoryAgg[key] }));
+  };
+  const pieData = getPieData();
+
+  const totalRevenue = userOrders.reduce((sum, o) => sum + Number(o.amount || 0), 0);
+  const totalVolume = userOrders.reduce((sum, o) => sum + Number(o.quantity || 0), 0);
 
   return (
     <div className="space-y-10 pb-12">
@@ -47,13 +120,38 @@ export const ReportsTab = () => {
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2 bg-slate-50 border border-slate-100 p-3 rounded-2xl px-5">
             <Calendar className="w-4 h-4 text-slate-400" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Derniers 30 jours</span>
-            <ChevronDown className="w-4 h-4 text-slate-400" />
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Dénieres statistiques</span>
           </div>
-          <button className="flex items-center space-x-2 bg-slate-950 text-white px-8 py-4 rounded-2xl hover:bg-primary-dark shadow-xl shadow-slate-950/20 transition-all font-black text-[10px] uppercase tracking-widest">
-            <Download className="w-4 h-4" />
-            <span>Télécharger Rapport</span>
-          </button>
+          <div className="relative group">
+            <button className="flex items-center space-x-2 bg-slate-950 text-white px-8 py-4 rounded-2xl hover:bg-primary-dark shadow-xl shadow-slate-950/20 transition-all font-black text-[10px] uppercase tracking-widest">
+              <Download className="w-4 h-4" />
+              <span>Télécharger Rapport</span>
+              <ChevronDown className="w-4 h-4 ml-2" />
+            </button>
+            <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-slate-100 rounded-2xl shadow-2xl overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+              <button 
+                 onClick={() => handleExport('pdf')}
+                 className="w-full text-left px-6 py-4 text-xs font-bold text-slate-600 hover:bg-slate-50 flex items-center"
+              >
+                <div className="w-2 h-2 rounded-full bg-rose-500 mr-3" />
+                Format PDF
+              </button>
+              <button 
+                 onClick={() => handleExport('excel')}
+                 className="w-full text-left px-6 py-4 text-xs font-bold text-slate-600 hover:bg-slate-50 flex items-center border-t border-slate-50"
+              >
+                <div className="w-2 h-2 rounded-full bg-emerald-500 mr-3" />
+                Format Excel
+              </button>
+              <button 
+                 onClick={() => handleExport('csv')}
+                 className="w-full text-left px-6 py-4 text-xs font-bold text-slate-600 hover:bg-slate-50 flex items-center border-t border-slate-50"
+              >
+                <div className="w-2 h-2 rounded-full bg-blue-500 mr-3" />
+                Format CSV
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -62,27 +160,27 @@ export const ReportsTab = () => {
          <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sleek border-l-8 border-l-primary-dark">
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Chiffre d'Affaires</p>
             <div className="flex items-end gap-3">
-               <h3 className="text-3xl font-black text-slate-900">4,250,000 F</h3>
+               <h3 className="text-3xl font-black text-slate-900">{formatPrice(totalRevenue)}</h3>
                <span className="text-emerald-500 text-[10px] font-black mb-1.5 flex items-center">
-                  <TrendingUp className="w-3 h-3 mr-1" /> +15.4%
+                  <TrendingUp className="w-3 h-3 mr-1" /> +0.0%
                </span>
             </div>
          </div>
          <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sleek border-l-8 border-l-blue-500">
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Volume Vendu</p>
             <div className="flex items-end gap-3">
-               <h3 className="text-3xl font-black text-slate-900">12.5 T</h3>
+               <h3 className="text-3xl font-black text-slate-900">{totalVolume} Unités</h3>
                <span className="text-emerald-500 text-[10px] font-black mb-1.5 flex items-center">
-                  <TrendingUp className="w-3 h-3 mr-1" /> +8.2%
+                  <TrendingUp className="w-3 h-3 mr-1" /> +0.0%
                </span>
             </div>
          </div>
          <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sleek border-l-8 border-l-amber-500">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Taux de Conversion</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Commandes Totales</p>
             <div className="flex items-end gap-3">
-               <h3 className="text-3xl font-black text-slate-900">24.8 %</h3>
-               <span className="text-rose-500 text-[10px] font-black mb-1.5 flex items-center">
-                  <TrendingDown className="w-3 h-3 mr-1" /> -2.1%
+               <h3 className="text-3xl font-black text-slate-900">{userOrders.length}</h3>
+               <span className="text-emerald-500 text-[10px] font-black mb-1.5 flex items-center">
+                  <TrendingUp className="w-3 h-3 mr-1" /> +0.0%
                </span>
             </div>
          </div>
@@ -101,7 +199,7 @@ export const ReportsTab = () => {
             </div>
             <div className="h-80 w-full">
                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={MOCK_STATS}>
+                  <BarChart data={dynamicStats}>
                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 900, fill: '#94a3b8'}} dy={10} />
                     <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 900, fill: '#94a3b8'}} />
                     <Tooltip 

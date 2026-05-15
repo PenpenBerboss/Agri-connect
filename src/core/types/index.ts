@@ -3,18 +3,19 @@ export type Category =
   | 'tubercules' 
   | 'fruits' 
   | 'légumes' 
-  | 'semences';
+  | 'semences'
+  | 'épices';
 
 export interface Review {
   id: string;
-  productId: string;
-  sellerId: string;
-  userId: string;
-  userName: string;
-  userAvatar?: string;
+  product_id: string;
+  buyer_id: string;
   rating: number;
   comment: string;
-  createdAt: string;
+  created_at: string;
+  profiles?: {
+    name: string;
+  };
 }
 
 export interface User {
@@ -22,31 +23,40 @@ export interface User {
   name: string;
   email: string;
   role: 'farmer' | 'buyer' | 'admin';
-  avatar?: string;
+  avatar_url?: string;
   phone?: string;
-  location: {
+  city?: string;
+  neighborhood?: string;
+  language?: string;
+  joined_at: string;
+  bio?: string;
+  status: 'pending' | 'active' | 'suspended';
+  preferred_categories?: string[];
+  rating?: number;
+  location?: {
     lat: number;
     lng: number;
     city: string;
     region: string;
   };
-  rating?: number;
-  joinedAt: string;
-  bio?: string;
-  preferred_categories?: string[];
+  lat?: number;
+  lng?: number;
+  region?: string;
 }
 
 export interface Product {
   id: string;
+  slug: string;
   name: string;
   description: string;
   price: number;
   unit: string;
   category: Category;
   subcategory?: string;
+  product_type?: string;
   images: string[];
-  sellerId: string;
-  sellerName: string;
+  seller_id: string;
+  seller_name: string;
   location: {
     lat: number;
     lng: number;
@@ -55,8 +65,8 @@ export interface Product {
   };
   stock: number;
   rating: number;
-  reviewsCount: number;
-  createdAt: string;
+  reviews_count: number;
+  created_at: string;
   views: number;
   isPopular?: boolean;
   isRecommended?: boolean;

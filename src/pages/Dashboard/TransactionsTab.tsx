@@ -1,13 +1,18 @@
 import { Briefcase, MoveRight, Filter, FileDown, Plus, X } from 'lucide-react';
-import { MOCK_ORDERS } from '../../services/mock/mockData';
 import { formatPrice, cn } from '../../shared/utils';
 import { useNavigate } from 'react-router-dom';
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useStore } from '../../application/store/useStore';
 
 export const TransactionsTab = () => {
   const navigate = useNavigate();
   const [showAddSale, setShowAddSale] = useState(false);
+  const { orders, user, products, createOrder } = useStore();
+  
+  const userProducts = user?.role === 'admin' ? products : products.filter(p => p.seller_id === user?.id);
+  const userOrders = user?.role === 'admin' ? orders : orders.filter(o => o.seller_id === user?.id || (o.buyer_id === user?.id));
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'delivered': return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20';
@@ -28,11 +33,32 @@ export const TransactionsTab = () => {
     }
   };
 
-  const handleSaleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSaleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!user) return;
     const formData = new FormData(e.currentTarget);
-    alert(`Nouvelle vente: ${formData.get('productName')} - ${formData.get('quantity')} unités.`);
-    setShowAddSale(false);
+    const productId = formData.get('productId') as string;
+    const quantity = Number(formData.get('quantity'));
+    const buyerName = formData.get('buyerName') as string;
+    
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+
+    try {
+      await createOrder({
+        product_id: productId,
+        seller_id: user.id,
+        buyer_id: user.id, // Enregistrement interne
+        quantity,
+        amount: product.price * quantity,
+        status: 'delivered',
+        created_at: new Date().toISOString()
+      });
+      setShowAddSale(false);
+      alert('Vente enregistrée !');
+    } catch (err) {
+      alert('Erreur lors de l\'enregistrement');
+    }
   };
 
   return (
@@ -67,18 +93,18 @@ export const TransactionsTab = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {MOCK_ORDERS.map((order) => (
+              {userOrders.map((order) => (
                 <tr key={order.id} className="hover:bg-slate-50 transition-colors group">
                   <td className="px-8 py-6">
                     <div className="bg-slate-100 px-3 py-1.5 rounded-lg inline-block">
-                      <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">#{order.id.split('-')[1]}</span>
+                      <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">#{order.id.split('-')[1] || order.id}</span>
                     </div>
-                    <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-widest">{order.date}</p>
+                    <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-widest">{new Date(order.created_at).toLocaleDateString()}</p>
                   </td>
-                  <td className="px-8 py-6 text-sm font-bold text-slate-900">{order.customerName}</td>
+                  <td className="px-8 py-6 text-sm font-bold text-slate-900">Client Info</td>
                   <td className="px-8 py-6">
-                    <p className="text-sm font-black text-slate-900">{order.productName}</p>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{order.quantity} {order.unit}</p>
+                    <p className="text-sm font-black text-slate-900">{order.products?.name}</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{order.quantity} unités</p>
                   </td>
                   <td className="px-8 py-6 text-sm font-black text-primary-dark tracking-tighter">{formatPrice(order.amount)}</td>
                   <td className="px-8 py-6">
@@ -114,7 +140,13 @@ export const TransactionsTab = () => {
                     <button onClick={() => setShowAddSale(false)} className="p-2 bg-slate-50 rounded-lg hover:bg-slate-100"><X size={20} /></button>
                 </div>
                 <form onSubmit={handleSaleSubmit} className="space-y-4">
-                    <input name="productName" placeholder="Nom du produit" className="w-full bg-slate-50 rounded-xl p-4 text-sm font-bold outline-none" required />
+                    <select name="productId" className="w-full bg-slate-50 rounded-xl p-4 text-sm font-bold outline-none appearance-none" required>
+                        <option value="">Sélectionner un produit</option>
+                        {userProducts.map(p => (
+                            <option key={p.id} value={p.id}>{p.name}</option>
+                        ))}
+                    </select>
+                    <input name="buyerName" placeholder="Nom de l'acheteur (interne)" className="w-full bg-slate-50 rounded-xl p-4 text-sm font-bold outline-none" required />
                     <input name="quantity" type="number" placeholder="Quantité" className="w-full bg-slate-50 rounded-xl p-4 text-sm font-bold outline-none" required />
                     <button type="submit" className="w-full bg-slate-950 text-white p-4 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-primary-dark transition-all">Enregistrer</button>
                 </form>

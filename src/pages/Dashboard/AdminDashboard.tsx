@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Users, 
   Boxes, 
@@ -16,57 +17,82 @@ import {
   UserCheck,
   AlertCircle,
   LogOut,
-  Zap
+  Zap,
+  Plus
 } from 'lucide-react';
 import { useStore } from '../../application/store/useStore';
-import { MOCK_USERS, MOCK_PRODUCTS, MOCK_REVIEWS } from '../../services/mock/mockData';
 import { formatPrice, cn } from '../../shared/utils';
 import { Modal } from '../../components/ui/Modal';
 import { motion, AnimatePresence } from 'motion/react';
+import { apiService } from '../../services/apiService';
+import { toast } from 'react-hot-toast';
 
 type AdminTab = 'stats' | 'users' | 'products' | 'reviews' | 'pending';
 
 export const AdminDashboard = () => {
+  const navigate = useNavigate();
   const { user, logout, register: registerUser } = useStore();
-  const [activeTab, setActiveTab] = useState<AdminTab>('stats');
-  const [pendingSellers, setPendingSellers] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<AdminTab | 'settings'>('stats');
   const [showModal, setShowModal] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
   const [modalMessage, setModalMessage] = useState('');
 
+  const [users, setUsers] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
+
+  const pendingSellers = users.filter((u: any) => u.role === 'farmer' && u.status === 'pending');
+
+  const validateSeller = async (seller: any) => {
+    try {
+       await apiService.updateProfileStatus(seller.id, 'active');
+       setUsers(users.map(u => u.id === seller.id ? { ...u, status: 'active' } : u));
+       toast.success(`Le vendeur ${seller.name} a été validé !`);
+       setActiveTab('stats');
+    } catch (error) {
+       console.error("Error validating seller", error);
+       toast.error("Erreur de validation");
+    }
+  };
+
+  const rejectSeller = async (seller: any) => {
+    try {
+       await apiService.updateProfileStatus(seller.id, 'suspended');
+       setUsers(users.map(u => u.id === seller.id ? { ...u, status: 'suspended' } : u));
+       toast.success("Demande rejetée");
+    } catch (error) {
+       console.error("Error rejecting seller", error);
+       toast.error("Erreur de rejet");
+    }
+  };
+
   React.useEffect(() => {
-    const saved = localStorage.getItem('AGR_PENDING_SELLERS');
-    if (saved) setPendingSellers(JSON.parse(saved));
+    const fetchData = async () => {
+       try {
+          const profilesData = await apiService.getProfiles();
+          setUsers(profilesData);
+          const productsData = await apiService.getProducts();
+          setProducts(productsData);
+          const ordersData = await apiService.getOrders();
+          setOrders(ordersData);
+          const reviewsData = await apiService.getReviews();
+          setReviews(reviewsData);
+       } catch (error) {
+          console.error("Failed to load admin data", error);
+       }
+    };
+    fetchData();
   }, []);
 
-  const savePendingSellers = (sellers: any[]) => {
-    localStorage.setItem('AGR_PENDING_SELLERS', JSON.stringify(sellers));
-    setPendingSellers(sellers);
-  };
-   
-  const validateSeller = async (seller: any) => {
-    await registerUser(seller);
-    savePendingSellers(pendingSellers.filter(s => s.email !== seller.email));
-    setModalTitle('Compte validé');
-    setModalMessage(`Le vendeur ${seller.name} a été validé avec succès.`);
-    setShowModal(true);
-    setActiveTab('stats');
-  };
-
-  const rejectSeller = (email: string) => {
-    savePendingSellers(pendingSellers.filter(s => s.email !== email));
-  };
+  const totalRevenue = orders.reduce((sum, o) => sum + Number(o.amount || 0), 0);
 
   const stats = [
-    { label: 'Utilisateurs', value: MOCK_USERS.length.toString(), icon: <Users />, color: 'from-blue-400 to-blue-600', trend: '+12%', isUp: true },
-    { label: 'Ventes Totales', value: '4.2M XAF', icon: <Activity />, color: 'from-emerald-400 to-emerald-600', trend: '+25%', isUp: true },
-    { label: 'Produits Actifs', value: MOCK_PRODUCTS.length.toString(), icon: <Boxes />, color: 'from-amber-400 to-amber-600', trend: '+8%', isUp: true },
-    { label: 'Alertes', value: '3', icon: <AlertCircle />, color: 'from-rose-400 to-rose-600', trend: '-2', isUp: false },
+    { label: 'Utilisateurs', value: users.length.toString(), icon: <Users />, color: 'from-blue-400 to-blue-600', trend: 'actif', isUp: true },
+    { label: 'Ventes Totales', value: formatPrice(totalRevenue), icon: <Activity />, color: 'from-emerald-400 to-emerald-600', trend: 'xaf', isUp: true },
+    { label: 'Produits Actifs', value: products.length.toString(), icon: <Boxes />, color: 'from-amber-400 to-amber-600', trend: 'stock', isUp: true },
+    { label: 'Alertes', value: pendingSellers.length.toString(), icon: <AlertCircle />, color: 'from-rose-400 to-rose-600', trend: 'pending', isUp: false },
   ];
-
-  const [users, setUsers] = useState(MOCK_USERS);
-  const [products, setProducts] = useState(MOCK_PRODUCTS);
-  const [reviews, setReviews] = useState(MOCK_REVIEWS);
   const [usersPage, setUsersPage] = useState(1);
   const [productsPage, setProductsPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
@@ -74,10 +100,46 @@ export const AdminDashboard = () => {
   const usersPaginated = users.slice((usersPage - 1) * ITEMS_PER_PAGE, usersPage * ITEMS_PER_PAGE);
   const productsPaginated = products.slice((productsPage - 1) * ITEMS_PER_PAGE, productsPage * ITEMS_PER_PAGE);
 
-  const deleteUser = (id: string) => setUsers(users.filter(u => u.id !== id));
-  const deleteProduct = (id: string) => setProducts(products.filter(p => p.id !== id));
-  const approveReview = (id: string) => setReviews(reviews.filter(r => r.id !== id));
-  const deleteReview = (id: string) => setReviews(reviews.filter(r => r.id !== id));
+  const deleteUser = async (id: string) => {
+     try {
+        await apiService.deleteProfile(id);
+        setUsers(users.filter(u => u.id !== id));
+        toast.success("Utilisateur supprimé");
+     } catch (e) {
+        console.error("Error deleting user", e);
+        toast.error("Erreur de suppression");
+     }
+  };
+  const deleteProduct = async (id: string) => {
+     try {
+        await apiService.deleteProduct(id);
+        setProducts(products.filter(p => p.id !== id));
+        toast.success("Produit supprimé");
+     } catch (e) {
+        console.error("Error deleting product", e);
+        toast.error("Erreur de suppression");
+     }
+  };
+  const approveReview = async (id: string) => {
+    try {
+      await apiService.deleteReview(id); // Using delete for both currently
+      setReviews(reviews.filter(r => r.id !== id));
+      toast.success("Avis approuvé");
+    } catch (e) {
+      console.error("Error approving review", e);
+      toast.error("Erreur d'approbation");
+    }
+  };
+  const deleteReview = async (id: string) => {
+    try {
+      await apiService.deleteReview(id);
+      setReviews(reviews.filter(r => r.id !== id));
+      toast.success("Avis supprimé");
+    } catch (e) {
+      console.error("Error deleting review", e);
+      toast.error("Erreur de suppression");
+    }
+  };
 
   const Pagination = ({ totalItems, currentPage, setPage }: { totalItems: number, currentPage: number, setPage: (p: number) => void }) => {
     const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
@@ -156,7 +218,7 @@ export const AdminDashboard = () => {
                     <tr key={u.id} className="hover:bg-slate-50/50 transition-all group">
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-4">
-                          <img src={u.avatar} className="w-10 h-10 rounded-xl bg-slate-100" alt="" />
+                          <img src={u.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'} className="w-10 h-10 rounded-xl bg-slate-100 object-cover" alt="" />
                           <div>
                             <p className="font-black text-slate-900 text-sm">{u.name}</p>
                             <p className="text-[10px] text-slate-400 font-bold">{u.email}</p>
@@ -173,11 +235,14 @@ export const AdminDashboard = () => {
                       </td>
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-2">
-                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                          <span className="text-[10px] font-bold text-slate-600 uppercase">Actif</span>
+                          <div className={cn(
+                            "w-1.5 h-1.5 rounded-full",
+                            u.status === 'active' ? "bg-emerald-500" : u.status === 'suspended' ? "bg-rose-500" : "bg-amber-500"
+                          )} />
+                          <span className="text-[10px] font-bold text-slate-600 uppercase">{u.status}</span>
                         </div>
                       </td>
-                      <td className="px-8 py-6 text-[10px] font-bold text-slate-400">{u.joinedAt}</td>
+                      <td className="px-8 py-6 text-[10px] font-bold text-slate-400">{new Date(u.joined_at).toLocaleDateString()}</td>
                       <td className="px-8 py-6 text-right">
                         <button onClick={() => deleteUser(u.id)} className="p-2 text-rose-400 hover:text-rose-600"><Trash2 size={18} /></button>
                       </td>
@@ -195,6 +260,13 @@ export const AdminDashboard = () => {
           <div className="bg-white rounded-[2.5rem] overflow-hidden border border-slate-200 shadow-xl">
             <div className="p-8 border-b border-slate-100 flex justify-between items-center">
               <h3 className="text-xl font-black text-slate-900 tracking-tight">Gestion des Produits</h3>
+              <button 
+                onClick={() => navigate('/dashboard')}
+                className="bg-primary-dark text-white px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:scale-105 transition-all"
+              >
+                <Plus size={16} />
+                Ajouter un Projet
+              </button>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -239,9 +311,9 @@ export const AdminDashboard = () => {
                 <div key={review.id} className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm relative overflow-hidden group">
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex items-center gap-3">
-                      <img src={review.userAvatar} className="w-10 h-10 rounded-xl" alt="" />
+                      <img src={review.profiles?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'} className="w-10 h-10 rounded-xl object-cover" alt="" />
                       <div>
-                        <p className="font-black text-slate-900 text-sm">{review.userName}</p>
+                        <p className="font-black text-slate-900 text-sm">{review.profiles?.name || 'Anonymous'}</p>
                         <div className="flex text-accent">
                           {[1,2,3,4,5].map(i => (
                             <Star key={i} size={10} className={cn(i <= review.rating ? "fill-current" : "text-slate-100")} />
@@ -278,12 +350,12 @@ export const AdminDashboard = () => {
                 <table className="w-full">
                   <tbody className="divide-y divide-slate-50">
                     {pendingSellers.map((seller) => (
-                      <tr key={seller.email}>
+                      <tr key={seller.id}>
                         <td className="px-8 py-6">{seller.name}</td>
                         <td className="px-8 py-6">{seller.email}</td>
                         <td className="px-8 py-6 text-right">
                           <button onClick={() => validateSeller(seller)} className="text-emerald-500 font-bold text-xs mr-4">Valider</button>
-                          <button onClick={() => rejectSeller(seller.email)} className="text-rose-500 font-bold text-xs">Rejeter</button>
+                          <button onClick={() => rejectSeller(seller)} className="text-rose-500 font-bold text-xs">Rejeter</button>
                         </td>
                       </tr>
                     ))}
@@ -294,6 +366,81 @@ export const AdminDashboard = () => {
           </div>
         );
 
+      case 'settings':
+        return (
+          <div className="max-w-4xl mx-auto space-y-12 pb-12">
+            <div className="bg-white p-12 rounded-[3rem] border border-slate-200 shadow-xl">
+              <div className="flex items-center justify-between mb-12">
+                <div>
+                  <h2 className="text-3xl font-black text-slate-900 tracking-tight">Configuration Profil</h2>
+                  <p className="text-slate-500 font-medium">Mise à jour de vos informations administratives.</p>
+                </div>
+              </div>
+
+              <form className="space-y-8" onSubmit={async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                const data = {
+                  name: formData.get('name') as string,
+                  avatar_url: formData.get('avatar_url') as string,
+                  phone: formData.get('phone') as string,
+                  email: formData.get('email') as string,
+                  city: formData.get('city') as string,
+                  neighborhood: formData.get('neighborhood') as string,
+                  language: formData.get('language') as string,
+                };
+                try {
+                  await useStore.getState().updateProfile(data);
+                  toast.success('Profil Administrateur mis à jour !');
+                } catch (err) {
+                  toast.error('Erreur de mise à jour.');
+                }
+              }}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-2 text-left">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Nom Complet</label>
+                    <input name="name" type="text" defaultValue={user?.name} className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold focus:ring-4 focus:ring-primary-light/10 transition-all outline-none" required />
+                  </div>
+                  <div className="space-y-2 text-left">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Email</label>
+                    <input name="email" type="email" defaultValue={user?.email} className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold focus:ring-4 focus:ring-primary-light/10 transition-all outline-none" required />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-2 text-left">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Téléphone</label>
+                    <input name="phone" type="tel" defaultValue={(user as any)?.phone || ''} placeholder="+237 6xx xxx xxx" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold focus:ring-4 focus:ring-primary-light/10 transition-all outline-none" />
+                  </div>
+                  <div className="space-y-2 text-left">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Langue</label>
+                    <select name="language" defaultValue={(user as any)?.language || 'fr'} className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold focus:ring-4 focus:ring-primary-light/10 transition-all outline-none appearance-none cursor-pointer">
+                      <option value="fr">Français</option>
+                      <option value="en">Anglais</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-2 text-left">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Ville</label>
+                    <input name="city" type="text" defaultValue={(user as any)?.city || ''} placeholder="ex: Yaoundé" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold focus:ring-4 focus:ring-primary-light/10 transition-all outline-none" />
+                  </div>
+                  <div className="space-y-2 text-left">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Quartier</label>
+                    <input name="neighborhood" type="text" defaultValue={(user as any)?.neighborhood || ''} placeholder="ex: Bastos" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold focus:ring-4 focus:ring-primary-light/10 transition-all outline-none" />
+                  </div>
+                </div>
+
+                <div className="pt-6">
+                  <button type="submit" className="w-full bg-primary-dark text-white py-5 rounded-2xl font-black text-sm uppercase tracking-widest shadow-2xl shadow-primary-dark/20 hover:bg-black transition-all">
+                    Enregistrer Admin
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        );
       default:
         return null;
     }
@@ -320,10 +467,11 @@ export const AdminDashboard = () => {
             { id: 'products', label: 'Produits', icon: <Boxes /> },
             { id: 'reviews', label: 'Modération', icon: <Star /> },
             { id: 'pending', label: 'Demandes Vendeurs', icon: <UserCheck /> },
+            { id: 'settings', label: 'Configuration', icon: <Activity /> },
           ].map((item) => (
             <button 
               key={item.id}
-              onClick={() => setActiveTab(item.id as AdminTab)}
+              onClick={() => setActiveTab(item.id as any)}
               className={cn(
                 "w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all",
                 activeTab === item.id ? "bg-primary-dark text-white" : "text-slate-400 hover:bg-slate-900 hover:text-white"
@@ -356,7 +504,7 @@ export const AdminDashboard = () => {
               <p className="font-black text-slate-900">{user?.name}</p>
               <p className="text-[10px] text-primary-dark font-black uppercase tracking-widest">Super Administrateur</p>
             </div>
-            <img src={user?.avatar} className="w-14 h-14 rounded-2xl bg-white border border-slate-200 p-1 shadow-lg" alt="" />
+            <img src={user?.avatar_url || `https://ui-avatars.com/api/?name=${user?.name}&background=random`} className="w-14 h-14 rounded-2xl bg-white border border-slate-200 p-1 shadow-lg object-cover" alt="" />
           </div>
         </div>
 

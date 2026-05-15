@@ -1,14 +1,13 @@
 import React from 'react';
 import { useStore } from '../../application/store/useStore';
-import { MOCK_PRODUCTS } from '../../services/mock/mockData';
 import { Link } from 'react-router-dom';
 import { Heart, Trash2, ShoppingCart, MoveRight, PackageX } from 'lucide-react';
 import { formatPrice } from '../../shared/utils';
 import { motion } from 'motion/react';
 
 export const Favorites = () => {
-  const { favorites, toggleFavorite } = useStore();
-  const favoriteProducts = MOCK_PRODUCTS.filter(p => favorites.includes(p.id));
+  const { favorites, toggleFavorite, products } = useStore();
+  const favoriteProducts = products.filter(p => favorites.includes(p.id));
 
   return (
     <div className="min-h-screen bg-slate-50 pt-20 pb-32">
@@ -78,7 +77,7 @@ export const Favorites = () => {
                            <span className="text-[10px] font-black uppercase text-primary-dark bg-primary-dark/5 px-2 py-0.5 rounded-full">{p.category}</span>
                         </div>
                         <h3 className="text-2xl font-black text-slate-900 group-hover:text-primary-dark transition-colors tracking-tight line-clamp-1">{p.name}</h3>
-                        <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-2">Vendeur: {p.sellerName}</p>
+                        <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-2">Vendeur: {p.seller_name}</p>
                      </div>
                      
                      <div className="flex items-center justify-between border-t border-slate-50 pt-6 mt-auto">

@@ -34,6 +34,13 @@ async function startServer() {
     if (error) return res.status(500).json({ error: error.message });
     res.json(data);
   });
+  
+  app.put("/api/profiles/:id", async (req, res) => {
+    const { id } = req.params;
+    const { data, error } = await supabaseAdmin.from('profiles').update(req.body).eq('id', id).select();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data[0]);
+  });
 
   app.put("/api/profiles/:id/status", async (req, res) => {
     const { id } = req.params;
@@ -51,6 +58,19 @@ async function startServer() {
         
     if (error) return res.status(500).json({ error: error.message });
     res.json(data);
+  });
+
+  app.delete("/api/profiles/:id", async (req, res) => {
+    const { id } = req.params;
+    
+    // Explicitly delete from profiles table first, to ensure it works even if auth user is missing
+    const { error: profileError } = await supabaseAdmin.from('profiles').delete().eq('id', id);
+    if (profileError) return res.status(500).json({ error: profileError.message });
+
+    // Then try to delete from Auth (this might cascade to profiles if not already deleted, but we handle it just in case)
+    await supabaseAdmin.auth.admin.deleteUser(id);
+    
+    res.json({ success: true });
   });
 
   // API Product routes
@@ -72,6 +92,21 @@ async function startServer() {
     res.json(data[0]);
   });
 
+  app.post("/api/products/:id/view", async (req, res) => {
+    const { id } = req.params;
+    const { data: product, error: fetchError } = await supabaseAdmin.from('products').select('views').eq('id', id).single();
+    if (fetchError) return res.status(500).json({ error: fetchError.message });
+
+    const { data, error } = await supabaseAdmin
+      .from('products')
+      .update({ views: (product.views || 0) + 1 })
+      .eq('id', id)
+      .select();
+      
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data[0]);
+  });
+
   app.delete("/api/products/:id", async (req, res) => {
     const { error } = await supabaseAdmin.from('products').delete().eq('id', req.params.id);
     if (error) return res.status(500).json({ error: error.message });
@@ -89,6 +124,45 @@ async function startServer() {
     const { data, error } = await supabaseAdmin.from('orders').insert(req.body).select();
     if (error) return res.status(500).json({ error: error.message });
     res.json(data[0]);
+  });
+
+  // API Review routes
+  app.get("/api/reviews", async (req, res) => {
+    let query = supabaseAdmin.from('reviews').select('*, profiles!buyer_id(name)');
+    
+    if (req.query.product_id) {
+      query = query.eq('product_id', req.query.product_id);
+    }
+
+    const { data, error } = await query;
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data);
+  });
+
+  app.post("/api/reviews", async (req, res) => {
+    const { data: review, error: reviewError } = await supabaseAdmin.from('reviews').insert(req.body).select().single();
+    if (reviewError) return res.status(500).json({ error: reviewError.message });
+
+    // Update product rating and reviews_count
+    const productId = req.body.product_id;
+    const { data: reviews, error: reviewsError } = await supabaseAdmin.from('reviews').select('rating').eq('product_id', productId);
+    
+    if (!reviewsError && reviews) {
+      const count = reviews.length;
+      const avg = reviews.reduce((acc, r) => acc + r.rating, 0) / count;
+      await supabaseAdmin.from('products').update({ 
+        rating: avg, 
+        reviews_count: count 
+      }).eq('id', productId);
+    }
+
+    res.json(review);
+  });
+
+  app.delete("/api/reviews/:id", async (req, res) => {
+    const { error } = await supabaseAdmin.from('reviews').delete().eq('id', req.params.id);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ success: true });
   });
 
   // Vite middleware for development

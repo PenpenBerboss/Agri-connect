@@ -1,15 +1,21 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MOCK_USERS, MOCK_PRODUCTS } from '../../services/mock/mockData';
 import { ChevronLeft, MapPin, ShieldCheck, Star } from 'lucide-react';
 import { formatPrice, cn } from '../../shared/utils';
+import { useStore } from '../../application/store/useStore';
 
 export const SellerProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [rating, setRating] = React.useState(0);
-  const seller = MOCK_USERS.find(u => u.id === id);
-  const sellerProducts = MOCK_PRODUCTS.filter(p => p.sellerId === id);
+  const { products } = useStore();
+  const sellerProducts = products.filter(p => p.seller_id === id);
+  const seller = sellerProducts.length > 0 ? {
+    id,
+    name: sellerProducts[0].seller_name || 'Vendeur Inconnu',
+    role: 'farmer',
+    location: sellerProducts[0].location
+  } : null;
 
   if (!seller) {
     return <div className="p-20 text-center">Vendeur non trouvé</div>;
@@ -24,7 +30,7 @@ export const SellerProfile = () => {
 
         <div className="bg-white rounded-[3rem] p-10 border border-slate-200 shadow-xl mb-12">
           <div className="flex items-center gap-8">
-            <img src={seller.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${seller.name}`} className="w-32 h-32 rounded-full bg-slate-100" alt={seller.name} />
+            <img src={(seller as any).avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${seller.name}`} className="w-32 h-32 rounded-full bg-slate-100 object-cover" alt={seller.name} />
             <div>
               <h1 className="text-4xl font-black mb-2">{seller.name}</h1>
               <p className="text-primary-dark font-bold mb-4">{seller.role === 'farmer' ? 'Producteur Certifié' : 'Vendeur'}</p>
