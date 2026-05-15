@@ -160,6 +160,21 @@ CREATE TABLE IF NOT EXISTS orders (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
 
+-- Enable RLS for orders
+ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+
+-- Policies: buyer can create orders for themselves (customer_id = auth.uid())
+DROP POLICY IF EXISTS "Users can insert own orders" ON orders;
+CREATE POLICY "Users can insert own orders" ON orders
+FOR INSERT
+WITH CHECK (customer_id = auth.uid());
+
+-- Policies: users can read their own orders (as buyer or seller)
+DROP POLICY IF EXISTS "Users can view own orders" ON orders;
+CREATE POLICY "Users can view own orders" ON orders
+FOR SELECT
+USING (customer_id = auth.uid() OR seller_id = auth.uid());
+
 -- Reviews table
 CREATE TABLE IF NOT EXISTS reviews (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,

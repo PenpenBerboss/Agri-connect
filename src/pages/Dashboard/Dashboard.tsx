@@ -48,9 +48,13 @@ import { apiService } from '../../services/apiService';
 type TabType = 'overview' | 'catalogue' | 'transactions' | 'reports' | 'settings' | 'users';
 
 export const Dashboard = () => {
-  const { user, logout, addProduct, products, orders, fetchOrders } = useStore();
+  const { user, logout, addProduct, products, orders, fetchOrders, fetchProducts } = useStore();
   const userProducts = user?.role === 'admin' ? products : products.filter(p => p.seller_id === user?.id);
   const userOrders = user?.role === 'admin' ? orders : orders.filter(o => o.seller_id === user?.id || (o.product_id && userProducts.some(p => p.id === o.product_id)));
+
+  React.useEffect(() => {
+    if (products.length === 0) fetchProducts();
+  }, [fetchProducts, products.length, user?.id]);
 
   React.useEffect(() => {
     if (orders.length === 0) fetchOrders();
@@ -179,7 +183,7 @@ export const Dashboard = () => {
                      <div className={cn("absolute top-0 right-0 w-24 h-24 bg-gradient-to-br opacity-[0.03] rounded-bl-[100px] transition-all group-hover:scale-150", stat.color)} />
                      <div className="flex justify-between items-start">
                        <div className={cn("w-14 h-14 flex items-center justify-center rounded-2xl text-white shadow-2xl bg-gradient-to-br shadow-slate-900/10", stat.color)}>
-                          {React.cloneElement(stat.icon as React.ReactElement, { className: 'w-7 h-7' })}
+                          {React.cloneElement(stat.icon as React.ReactElement<any>, { className: 'w-7 h-7' })}
                        </div>
                        <div className={cn("px-3 py-1 rounded-full text-[10px] font-black tracking-widest bg-slate-50 border border-slate-100", 
                          stat.trend.startsWith('+') ? 'text-emerald-600' : 'text-rose-500'
