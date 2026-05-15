@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { supabase } from '../lib/supabase';
 
 const api = axios.create({
   baseURL: '/api',
@@ -19,9 +20,19 @@ api.interceptors.response.use(
 );
 
 export const apiService = {
-  // Profiles (Admin)
+  // Profiles
+  // IMPORTANT: sur Vercel, ton backend Express (/api/*) peut ne pas être exposé => on lit depuis Supabase directement.
   getProfiles: () => api.get('/profiles').then(res => res.data),
-  getProfileById: (id: string) => api.get(`/profiles/${id}`).then(res => res.data),
+  getProfileById: async (id: string) => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
   updateProfile: (id: string, profile: any) => api.put(`/profiles/${id}`, profile).then(res => res.data),
   updateProfileStatus: (id: string, status: string) => api.put(`/profiles/${id}/status`, { status }).then(res => res.data),
   deleteProfile: (id: string) => api.delete(`/profiles/${id}`).then(res => res.data),
