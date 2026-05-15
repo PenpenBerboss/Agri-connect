@@ -124,6 +124,14 @@ ON CONFLICT (id) DO NOTHING;
 DROP POLICY IF EXISTS "Public Read Access" ON storage.objects;
 CREATE POLICY "Public Read Access" ON storage.objects FOR SELECT USING (bucket_id IN ('products', 'profiles'));
 
+-- Products RLS
+ALTER TABLE products ENABLE ROW LEVEL SECURITY;
+
+-- Public can read products (marketplace)
+DROP POLICY IF EXISTS "Public can view products" ON products;
+CREATE POLICY "Public can view products" ON products FOR SELECT
+USING (true);
+
 -- Allow authenticated users to upload to products
 DROP POLICY IF EXISTS "Auth Upload Products" ON storage.objects;
 CREATE POLICY "Auth Upload Products" ON storage.objects FOR INSERT 
