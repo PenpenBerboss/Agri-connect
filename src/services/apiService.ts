@@ -40,6 +40,17 @@ export const apiService = {
     return data;
   },
 
+  createProfile: async (profile: any) => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .insert(profile)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
   updateProfile: (id: string, profile: any) => api.put(`/profiles/${id}`, profile).then(res => res.data),
   updateProfileStatus: (id: string, status: string) => api.put(`/profiles/${id}/status`, { status }).then(res => res.data),
   deleteProfile: (id: string) => api.delete(`/profiles/${id}`).then(res => res.data),

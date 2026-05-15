@@ -110,6 +110,25 @@ export const useStore = create<AppState>()(
           set({ user: { ...user, ...profile } as any, isAuthenticated: true });
         } catch (err) {
           if (isProfileMissingError(err)) {
+            // Si le profil n'existe pas encore, on le crée.
+            // C'est essentiel pour que l'admin voie les vendeurs en attente.
+            if (data.role === 'farmer') {
+              const createdProfile = await apiService.createProfile?.({
+                id: user.id,
+                name: data.name,
+                email: data.email,
+                role: 'farmer',
+                status: 'pending',
+                joined_at: new Date().toISOString(),
+              });
+              set({
+                user: { ...user, ...(createdProfile as any) } as any,
+                isAuthenticated: true,
+              });
+              return;
+            }
+
+            // Buyer: on autorise sans profil si pas créé ailleurs
             set({ user: user as any, isAuthenticated: true });
             return;
           }
