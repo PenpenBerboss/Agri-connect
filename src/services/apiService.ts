@@ -56,10 +56,10 @@ export const apiService = {
   deleteProfile: (id: string) => api.delete(`/profiles/${id}`).then(res => res.data),
 
   // Products
+  // IMPORTANT: lecture via backend (service role) pour contourner RLS
   getProducts: async () => {
-    const { data, error } = await supabase.from('products').select('*');
-    if (error) throw error;
-    return data;
+    const res = await api.get('/products');
+    return res.data;
   },
 
   createProduct: (product: any) => api.post('/products', product).then(res => res.data),
