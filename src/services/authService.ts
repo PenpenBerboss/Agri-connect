@@ -46,9 +46,6 @@ export const authService = {
   signInWithGoogle: async () => {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/dashboard`
-      }
     });
     if (error) throw error;
     return data;
@@ -57,9 +54,6 @@ export const authService = {
   signInWithFacebook: async () => {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'facebook',
-      options: {
-        redirectTo: `${window.location.origin}/dashboard`
-      }
     });
     if (error) throw error;
     return data;
