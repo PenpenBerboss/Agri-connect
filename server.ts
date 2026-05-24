@@ -9,14 +9,29 @@ dotenv.config();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Initialize Supabase Admin
-if (!process.env.VITE_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-  console.error("Missing SUPABASE environment variables!");
+// Initialize Supabase Admin (Lazy)
+let supabaseAdminInstance: any = null;
+
+function getSupabaseAdmin() {
+  if (!supabaseAdminInstance) {
+    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseKey) {
+      console.error("Missing SUPABASE environment variables!");
+      throw new Error("Missing Supabase configuration");
+    }
+    
+    supabaseAdminInstance = createClient(supabaseUrl, supabaseKey);
+  }
+  return supabaseAdminInstance;
 }
-const supabaseAdmin = createClient(
-  process.env.VITE_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+
+// Helper to access Supabase Admin
+const supabaseAdmin = {
+  from: (table: string) => getSupabaseAdmin().from(table),
+  auth: { admin: { deleteUser: (id: string) => getSupabaseAdmin().auth.admin.deleteUser(id) } }
+};
 
 const app = express();
 const PORT = 3000;
