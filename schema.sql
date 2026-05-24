@@ -124,14 +124,6 @@ ON CONFLICT (id) DO NOTHING;
 DROP POLICY IF EXISTS "Public Read Access" ON storage.objects;
 CREATE POLICY "Public Read Access" ON storage.objects FOR SELECT USING (bucket_id IN ('products', 'profiles'));
 
--- Products RLS
-ALTER TABLE products ENABLE ROW LEVEL SECURITY;
-
--- Public can read products (marketplace)
-DROP POLICY IF EXISTS "Public can view products" ON products;
-CREATE POLICY "Public can view products" ON products FOR SELECT
-USING (true);
-
 -- Allow authenticated users to upload to products
 DROP POLICY IF EXISTS "Auth Upload Products" ON storage.objects;
 CREATE POLICY "Auth Upload Products" ON storage.objects FOR INSERT 
@@ -159,21 +151,6 @@ CREATE TABLE IF NOT EXISTS orders (
     status TEXT NOT NULL DEFAULT 'pending', -- 'pending', 'delivered', 'cancelled'
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
-
--- Enable RLS for orders
-ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
-
--- Policies: buyer can create orders for themselves (customer_id = auth.uid())
-DROP POLICY IF EXISTS "Users can insert own orders" ON orders;
-CREATE POLICY "Users can insert own orders" ON orders
-FOR INSERT
-WITH CHECK (customer_id = auth.uid());
-
--- Policies: users can read their own orders (as buyer or seller)
-DROP POLICY IF EXISTS "Users can view own orders" ON orders;
-CREATE POLICY "Users can view own orders" ON orders
-FOR SELECT
-USING (customer_id = auth.uid() OR seller_id = auth.uid());
 
 -- Reviews table
 CREATE TABLE IF NOT EXISTS reviews (

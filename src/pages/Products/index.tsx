@@ -250,11 +250,11 @@ export const Products = () => {
                                  <span className="text-xl md:text-2xl font-black text-primary-dark leading-none tracking-tighter">{formatPrice(product.price)}</span>
                                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">/{product.unit}</span>
                               </div>
-                              <Link
-                                to={`/products/${product.id}`}
-                                className="bg-slate-950 text-white text-[13px] font-black uppercase tracking-[0.12em] px-6 md:px-8 py-4 rounded-2xl hover:bg-primary-dark shadow-lg shadow-slate-950/15 active:scale-95 shrink-0 transition-all whitespace-nowrap inline-flex items-center justify-center min-w-[110px] self-end"
+                              <Link 
+                               to={`/products/${product.id}`}
+                               className="bg-slate-950 text-white text-[10px] font-black uppercase tracking-widest px-4 md:px-6 py-3 rounded-xl hover:bg-primary-dark shadow-lg shadow-slate-950/10 active:scale-95 shrink-0 transition-all"
                               >
-                                <span className="leading-none">Explorer</span>
+                                Explorer
                               </Link>
                            </div>
                         </div>
