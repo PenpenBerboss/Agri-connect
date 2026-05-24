@@ -21,7 +21,8 @@ function getSupabaseAdmin() {
     
     if (!supabaseUrl || !supabaseKey) {
       console.error("DEBUG: Missing SUPABASE environment variables!");
-      throw new Error("Missing Supabase configuration");
+      console.error("DEBUG: Available keys:", Object.keys(process.env).filter(k => k.includes('SUPABASE')));
+      throw new Error(`Missing Supabase configuration. URL: ${!!supabaseUrl}, Key: ${!!supabaseKey}`);
     }
     
     console.log("Initializing Supabase Admin with URL:", supabaseUrl);
@@ -239,23 +240,29 @@ async function setupVite() {
       appType: "spa",
     });
     app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(__dirname, 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (_req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
-  }
-
-  if (process.env.NODE_ENV !== 'test') {
-    app.listen(PORT, "0.0.0.0", () => {
-      console.log(`Server running on http://localhost:${PORT}`);
-    });
   }
 }
 
+// Static file serving for SPA (used in production and on Vercel)
+if (process.env.NODE_ENV === 'production') {
+  const distPath = path.join(__dirname, 'dist');
+  app.use(express.static(distPath));
+  app.get('*', (_req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+}
+
+// Start server locally, not on Vercel
 if (!process.env.VERCEL) {
-  setupVite();
+  setupVite().then(() => {
+    if (process.env.NODE_ENV !== 'test') {
+      app.listen(PORT, "0.0.0.0", () => {
+        console.log(`Server running on http://localhost:${PORT}`);
+      });
+    }
+  });
+} else {
+  // Still need to make sure Vite isn't setup in prod-Vercel environment
 }
 
 export default app;
