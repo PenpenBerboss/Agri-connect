@@ -44,12 +44,17 @@ app.use(express.json());
 
 // API Admin routes for User Management
 app.get("/api/profiles", async (_req, res) => {
-  const { data, error } = await supabaseAdmin.from('profiles').select('*');
-  if (error) {                
-      console.error("Supabase Error GET /api/profiles:", error);
-      return res.status(500).json({ error: error.message });
+  try {
+    const { data, error } = await supabaseAdmin.from('profiles').select('*');
+    if (error) {                
+        console.error("Supabase Error GET /api/profiles:", error);
+        return res.status(500).json({ error: error.message });
+    }
+    res.json(data);
+  } catch (err) {
+    console.error("Unexpected Error GET /api/profiles:", err);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
-  res.json(data);
 });
 
 app.get("/api/profiles/:id", async (req, res) => {
@@ -68,60 +73,90 @@ app.get("/api/profiles/:id", async (req, res) => {
 });
 
 app.put("/api/profiles/:id", async (req, res) => {
-  const { id } = req.params;
-  const { data, error } = await supabaseAdmin.from('profiles').update(req.body).eq('id', id).select();
-  if (error) return res.status(500).json({ error: error.message });
-  res.json(data[0]);
+  try {
+    const { id } = req.params;
+    const { data, error } = await supabaseAdmin.from('profiles').update(req.body).eq('id', id).select();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data[0]);
+  } catch (err) {
+    console.error(`Unexpected Error PUT /api/profiles/${req.params.id}:`, err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 });
 
 app.put("/api/profiles/:id/status", async (req, res) => {
-  const { id } = req.params;
-  const { status } = req.body;
-  
-  // Validate status
-  if (!['pending', 'active', 'suspended'].includes(status)) {
-      return res.status(400).json({ error: 'Invalid status' });
-  }
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    // Validate status
+    if (!['pending', 'active', 'suspended'].includes(status)) {
+        return res.status(400).json({ error: 'Invalid status' });
+    }
 
-  const { data, error } = await supabaseAdmin
-      .from('profiles')
-      .update({ status })
-      .eq('id', id);
-      
-  if (error) return res.status(500).json({ error: error.message });
-  res.json(data);
+    const { data, error } = await supabaseAdmin
+        .from('profiles')
+        .update({ status })
+        .eq('id', id);
+        
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data);
+  } catch (err) {
+    console.error(`Unexpected Error PUT /api/profiles/${req.params.id}/status:`, err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 });
 
 app.delete("/api/profiles/:id", async (req, res) => {
-  const { id } = req.params;
-  
-  // Explicitly delete from profiles table first, to ensure it works even if auth user is missing
-  const { error: profileError } = await supabaseAdmin.from('profiles').delete().eq('id', id);
-  if (profileError) return res.status(500).json({ error: profileError.message });
+  try {
+    const { id } = req.params;
+    
+    // Explicitly delete from profiles table first, to ensure it works even if auth user is missing
+    const { error: profileError } = await supabaseAdmin.from('profiles').delete().eq('id', id);
+    if (profileError) return res.status(500).json({ error: profileError.message });
 
-  // Then try to delete from Auth (this might cascade to profiles if not already deleted, but we handle it just in case)
-  await supabaseAdmin.auth.admin.deleteUser(id);
-  
-  res.json({ success: true });
+    // Then try to delete from Auth (this might cascade to profiles if not already deleted, but we handle it just in case)
+    await supabaseAdmin.auth.admin.deleteUser(id);
+    
+    res.json({ success: true });
+  } catch (err) {
+    console.error(`Unexpected Error DELETE /api/profiles/${req.params.id}:`, err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 });
 
 // API Product routes
 app.get("/api/products", async (_req, res) => {
-  const { data, error } = await supabaseAdmin.from('products').select('*');
-  if (error) return res.status(500).json({ error: error.message });
-  res.json(data);
+  try {
+    const { data, error } = await supabaseAdmin.from('products').select('*');
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data);
+  } catch (err) {
+    console.error("Unexpected Error GET /api/products:", err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 });
 
 app.post("/api/products", async (req, res) => {
-  const { data, error } = await supabaseAdmin.from('products').insert(req.body).select();
-  if (error) return res.status(500).json({ error: error.message });
-  res.json(data[0]);
+  try {
+    const { data, error } = await supabaseAdmin.from('products').insert(req.body).select();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data[0]);
+  } catch (err) {
+    console.error("Unexpected Error POST /api/products:", err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 });
 
 app.put("/api/products/:id", async (req, res) => {
-  const { data, error } = await supabaseAdmin.from('products').update(req.body).eq('id', req.params.id).select();
-  if (error) return res.status(500).json({ error: error.message });
-  res.json(data[0]);
+  try {
+    const { data, error } = await supabaseAdmin.from('products').update(req.body).eq('id', req.params.id).select();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data[0]);
+  } catch (err) {
+    console.error(`Unexpected Error PUT /api/products/${req.params.id}:`, err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 });
 
 app.post("/api/products/:id/view", async (req, res) => {
