@@ -1,7 +1,7 @@
 import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
-import * as dotenv from 'dotenv';
+import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { createClient } from '@supabase/supabase-js';
 
@@ -18,7 +18,10 @@ function getSupabaseAdmin() {
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     
     if (!supabaseUrl || !supabaseKey) {
-      console.error("Missing SUPABASE environment variables! URL exists:", !!supabaseUrl, "KEY exists:", !!supabaseKey);
+      console.error("DEBUG: Missing SUPABASE environment variables!");
+      console.error("DEBUG: VITE_SUPABASE_URL (from process.env):", process.env.VITE_SUPABASE_URL);
+      console.error("DEBUG: SUPABASE_URL (from process.env):", process.env.SUPABASE_URL);
+      console.error("DEBUG: SUPABASE_SERVICE_ROLE_KEY (from process.env):", process.env.SUPABASE_SERVICE_ROLE_KEY ? "***PRESENT***" : "***MISSING***");
       throw new Error("Missing Supabase configuration");
     }
     
