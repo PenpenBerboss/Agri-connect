@@ -5,7 +5,9 @@ import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { createClient } from '@supabase/supabase-js';
 
-dotenv.config();
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config();
+}
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -19,9 +21,6 @@ function getSupabaseAdmin() {
     
     if (!supabaseUrl || !supabaseKey) {
       console.error("DEBUG: Missing SUPABASE environment variables!");
-      console.error("DEBUG: VITE_SUPABASE_URL (from process.env):", process.env.VITE_SUPABASE_URL);
-      console.error("DEBUG: SUPABASE_URL (from process.env):", process.env.SUPABASE_URL);
-      console.error("DEBUG: SUPABASE_SERVICE_ROLE_KEY (from process.env):", process.env.SUPABASE_SERVICE_ROLE_KEY ? "***PRESENT***" : "***MISSING***");
       throw new Error("Missing Supabase configuration");
     }
     
@@ -260,4 +259,3 @@ if (!process.env.VERCEL) {
 }
 
 export default app;
-
