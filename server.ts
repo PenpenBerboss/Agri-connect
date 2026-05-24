@@ -18,10 +18,11 @@ function getSupabaseAdmin() {
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     
     if (!supabaseUrl || !supabaseKey) {
-      console.error("Missing SUPABASE environment variables!");
+      console.error("Missing SUPABASE environment variables! URL exists:", !!supabaseUrl, "KEY exists:", !!supabaseKey);
       throw new Error("Missing Supabase configuration");
     }
     
+    console.log("Initializing Supabase Admin with URL:", supabaseUrl);
     supabaseAdminInstance = createClient(supabaseUrl, supabaseKey);
   }
   return supabaseAdminInstance;
@@ -49,13 +50,18 @@ app.get("/api/profiles", async (_req, res) => {
 });
 
 app.get("/api/profiles/:id", async (req, res) => {
-  const { id } = req.params;
-  const { data, error } = await supabaseAdmin.from('profiles').select('*').eq('id', id).single();
-  if (error) {
-      console.error(`Supabase Error GET /api/profiles/${id}:`, error);
-      return res.status(500).json({ error: error.message });
+  try {
+    const { id } = req.params;
+    const { data, error } = await supabaseAdmin.from('profiles').select('*').eq('id', id).single();
+    if (error) {
+        console.error(`Supabase Error GET /api/profiles/${id}:`, error);
+        return res.status(500).json({ error: error.message });
+    }
+    res.json(data);
+  } catch (err) {
+    console.error(`Unexpected Error GET /api/profiles/${req.params.id}:`, err);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
-  res.json(data);
 });
 
 app.put("/api/profiles/:id", async (req, res) => {
