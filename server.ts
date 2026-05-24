@@ -10,6 +10,9 @@ dotenv.config();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Initialize Supabase Admin
+if (!process.env.VITE_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  console.error("Missing SUPABASE environment variables!");
+}
 const supabaseAdmin = createClient(
   process.env.VITE_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -23,14 +26,20 @@ app.use(express.json());
 // API Admin routes for User Management
 app.get("/api/profiles", async (_req, res) => {
   const { data, error } = await supabaseAdmin.from('profiles').select('*');
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) {                
+      console.error("Supabase Error GET /api/profiles:", error);
+      return res.status(500).json({ error: error.message });
+  }
   res.json(data);
 });
 
 app.get("/api/profiles/:id", async (req, res) => {
   const { id } = req.params;
   const { data, error } = await supabaseAdmin.from('profiles').select('*').eq('id', id).single();
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) {
+      console.error(`Supabase Error GET /api/profiles/${id}:`, error);
+      return res.status(500).json({ error: error.message });
+  }
   res.json(data);
 });
 
