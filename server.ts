@@ -2,12 +2,9 @@ import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import * as dotenv from 'dotenv';
-import { fileURLToPath } from 'url';
 import { createClient } from '@supabase/supabase-js';
 
 dotenv.config();
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Initialize Supabase Admin lazily to prevent startup crashes
 let supabaseAdmin: ReturnType<typeof createClient> | null = null;
@@ -182,7 +179,7 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(__dirname, 'dist');
+    const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
     app.get('*', (_req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
