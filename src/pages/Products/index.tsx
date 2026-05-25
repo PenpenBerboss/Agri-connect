@@ -32,8 +32,6 @@ export const Products = () => {
   const { toggleFavorite, isFavorite, products } = useStore();
 
   const filteredProducts = useMemo(() => {
-    if (!Array.isArray(products)) return [];
-
     return products.filter(p => {
       const matchesSearch = (p.name?.toLowerCase() || '').includes(query.toLowerCase()) || 
                            (p.description?.toLowerCase() || '').includes(query.toLowerCase());

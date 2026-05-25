@@ -1,25 +1,13 @@
 import axios from 'axios';
 
-// Sur Vercel, si VITE_API_URL n'est pas défini, on utilise le chemin relatif.
-// Si VITE_API_URL est défini (ex: https://mon-app.vercel.app), 
-// on s'assure de ne pas doubler le /api
-const API_BASE_URL = import.meta.env.VITE_API_URL || '';
-
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: '/api',
 });
 
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    const data = error.response?.data;
-    
-    // On s'assure d'extraire une chaîne de caractères
-    const message = (typeof data?.error === 'string' 
-      ? data.error 
-      : (data?.message || error.message)) 
-      || 'Une erreur est survenue';
-
+    const message = error.response?.data?.error || error.message || 'Une erreur est survenue';
     console.error('API Error:', {
       status: error.response?.status,
       message: message,
@@ -32,25 +20,25 @@ api.interceptors.response.use(
 
 export const apiService = {
   // Profiles (Admin)
-  getProfiles: () => api.get('/api/profiles').then(res => res.data),
-  getProfileById: (id: string) => api.get(`/api/profiles/${id}`).then(res => res.data),
-  updateProfile: (id: string, profile: any) => api.put(`/api/profiles/${id}`, profile).then(res => res.data),
-  updateProfileStatus: (id: string, status: string) => api.put(`/api/profiles/${id}/status`, { status }).then(res => res.data),
-  deleteProfile: (id: string) => api.delete(`/api/profiles/${id}`).then(res => res.data),
+  getProfiles: () => api.get('/profiles').then(res => res.data),
+  getProfileById: (id: string) => api.get(`/profiles/${id}`).then(res => res.data),
+  updateProfile: (id: string, profile: any) => api.put(`/profiles/${id}`, profile).then(res => res.data),
+  updateProfileStatus: (id: string, status: string) => api.put(`/profiles/${id}/status`, { status }).then(res => res.data),
+  deleteProfile: (id: string) => api.delete(`/profiles/${id}`).then(res => res.data),
 
   // Products
-  getProducts: () => api.get('/api/products').then(res => res.data),
-  createProduct: (product: any) => api.post('/api/products', product).then(res => res.data),
-  updateProduct: (id: string, product: any) => api.put(`/api/products/${id}`, product).then(res => res.data),
-  deleteProduct: (id: string) => api.delete(`/api/products/${id}`).then(res => res.data),
-  recordProductView: (id: string) => api.post(`/api/products/${id}/view`).then(res => res.data),
+  getProducts: () => api.get('/products').then(res => res.data),
+  createProduct: (product: any) => api.post('/products', product).then(res => res.data),
+  updateProduct: (id: string, product: any) => api.put(`/products/${id}`, product).then(res => res.data),
+  deleteProduct: (id: string) => api.delete(`/products/${id}`).then(res => res.data),
+  recordProductView: (id: string) => api.post(`/products/${id}/view`).then(res => res.data),
 
   // Orders
-  getOrders: () => api.get('/api/orders').then(res => res.data),
-  createOrder: (order: any) => api.post('/api/orders', order).then(res => res.data),
+  getOrders: () => api.get('/orders').then(res => res.data),
+  createOrder: (order: any) => api.post('/orders', order).then(res => res.data),
 
   // Reviews
-  getReviews: (productId?: string) => api.get('/api/reviews', { params: { product_id: productId } }).then(res => res.data),
-  createReview: (review: any) => api.post('/api/reviews', review).then(res => res.data),
-  deleteReview: (id: string) => api.delete(`/api/reviews/${id}`).then(res => res.data),
+  getReviews: (productId?: string) => api.get('/reviews', { params: { product_id: productId } }).then(res => res.data),
+  createReview: (review: any) => api.post('/reviews', review).then(res => res.data),
+  deleteReview: (id: string) => api.delete(`/reviews/${id}`).then(res => res.data),
 };

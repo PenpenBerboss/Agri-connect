@@ -18,10 +18,10 @@ export const BuyerProfile = () => {
   const { user, logout, favorites, orders, fetchOrders } = useStore();
 
   React.useEffect(() => {
-    fetchOrders();
-  }, [fetchOrders]);
+    if (orders.length === 0) fetchOrders();
+  }, [fetchOrders, orders.length]);
 
-  const userOrders = Array.isArray(orders) ? orders.filter(o => o.customer_id === user?.id) : [];
+  const userOrders = orders.filter(o => o.customer_id === user?.id);
 
   const menuItems = [
     { icon: ShoppingBag, label: 'Mes Commandes', count: userOrders.length, path: '/cart' },

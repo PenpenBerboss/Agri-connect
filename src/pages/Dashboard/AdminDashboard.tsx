@@ -160,21 +160,10 @@ export const AdminDashboard = () => {
           <div className="space-y-10">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {stats.map((stat, i) => (
-                <div 
-                  key={i} 
-                  onClick={() => {
-                    if (stat.label === 'Alertes') setActiveTab('pending');
-                    if (stat.label === 'Utilisateurs') setActiveTab('users');
-                    if (stat.label === 'Produits Actifs') setActiveTab('products');
-                  }}
-                  className={cn(
-                    "bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 transition-all",
-                    (stat.label === 'Alertes' && pendingSellers.length > 0) ? "cursor-pointer hover:border-rose-300 hover:bg-rose-50/30" : "cursor-default"
-                  )}
-                >
+                <div key={i} className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50">
                   <div className="flex justify-between items-start mb-6">
                     <div className={cn("w-12 h-12 flex items-center justify-center rounded-2xl text-white shadow-lg bg-gradient-to-br", stat.color)}>
-                      {React.cloneElement(stat.icon as React.ReactElement<any>, { size: 24 })}
+                      {React.cloneElement(stat.icon as React.ReactElement, { size: 24 })}
                     </div>
                     <div className={cn(
                       "flex items-center gap-1 text-[10px] font-black tracking-widest px-2.5 py-1 rounded-full",
@@ -477,26 +466,19 @@ export const AdminDashboard = () => {
             { id: 'users', label: 'Utilisateurs', icon: <Users /> },
             { id: 'products', label: 'Produits', icon: <Boxes /> },
             { id: 'reviews', label: 'Modération', icon: <Star /> },
-            { id: 'pending', label: 'Validation Producteurs', icon: <UserCheck /> },
+            { id: 'pending', label: 'Demandes Vendeurs', icon: <UserCheck /> },
             { id: 'settings', label: 'Configuration', icon: <Activity /> },
           ].map((item) => (
             <button 
               key={item.id}
               onClick={() => setActiveTab(item.id as any)}
               className={cn(
-                "w-full flex items-center justify-between px-5 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all",
+                "w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all",
                 activeTab === item.id ? "bg-primary-dark text-white" : "text-slate-400 hover:bg-slate-900 hover:text-white"
               )}
             >
-              <div className="flex items-center gap-4">
-                {React.cloneElement(item.icon as React.ReactElement<any>, { size: 18 })}
-                <span>{item.label}</span>
-              </div>
-              {item.id === 'pending' && pendingSellers.length > 0 && (
-                <span className="bg-rose-500 text-white text-[10px] px-2 py-0.5 rounded-lg shadow-lg animate-pulse">
-                  {pendingSellers.length}
-                </span>
-              )}
+              {React.cloneElement(item.icon as React.ReactElement, { size: 18 })}
+              <span>{item.label}</span>
             </button>
           ))}
         </nav>

@@ -7,7 +7,7 @@ import { motion } from 'motion/react';
 import { toast } from 'react-hot-toast';
 
 export const Cart = () => {
-  const { cart, removeFromCart, updateQuantity, clearCart, products, createOrder, user } = useStore();
+  const { cart, removeFromCart, updateQuantity, clearCart, products } = useStore();
   const navigate = useNavigate();
 
   const cartProducts = cart.map(item => {
@@ -128,26 +128,10 @@ export const Cart = () => {
 
                 <button 
                   onClick={async () => {
-                    if (!user) {
-                      toast.error('Veuillez vous connecter pour commander');
-                      return;
-                    }
-
                     try {
+                      // Mocking order placement
                       toast.loading('Traitement de votre commande...', { id: 'order-loading' });
-                      
-                      // Création réelle des commandes dans la base de données
-                      for (const item of cartProducts) {
-                        await createOrder({
-                          customer_id: user.id,
-                          seller_id: item.seller_id,
-                          product_id: item.id,
-                          quantity: item.quantity,
-                          amount: item.price * item.quantity,
-                          status: 'pending'
-                        });
-                      }
-
+                      await new Promise(resolve => setTimeout(resolve, 2000));
                       clearCart();
                       toast.dismiss('order-loading');
                       toast.success('Commande passée avec succès !');
