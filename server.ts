@@ -28,10 +28,16 @@ function getSupabaseAdmin() {
     console.log("---------------------------");
 
     if (!supabaseUrl || !supabaseKey) {
-      throw new Error(`Missing Supabase configuration. URL present: ${!!supabaseUrl}, Key present: ${!!supabaseKey}`);
+       throw new Error(`Missing Supabase configuration. URL present: ${!!supabaseUrl}, Key present: ${!!supabaseKey}`);
     }
     
-    supabaseAdminInstance = createClient(supabaseUrl, supabaseKey);
+    try {
+      supabaseAdminInstance = createClient(supabaseUrl, supabaseKey);
+      console.log("Supabase Client initialized successfully");
+    } catch (err) {
+      console.error("Failed to initialize Supabase Client:", err);
+      throw err;
+    }
   }
   return supabaseAdminInstance;
 }
