@@ -14,6 +14,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Initialize Supabase Admin (Lazy)
 let supabaseAdminInstance: any = null;
 
+// ... existing code ...
 function getSupabaseAdmin() {
   if (!supabaseAdminInstance) {
     const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
@@ -21,7 +22,8 @@ function getSupabaseAdmin() {
     
     if (!supabaseUrl || !supabaseKey) {
       console.error("DEBUG: Missing SUPABASE environment variables!");
-      console.error("DEBUG: Available keys:", Object.keys(process.env).filter(k => k.includes('SUPABASE')));
+      // List all env vars for debugging
+      console.error("DEBUG: Process ENV keys:", Object.keys(process.env));
       throw new Error(`Missing Supabase configuration. URL: ${!!supabaseUrl}, Key: ${!!supabaseKey}`);
     }
     
@@ -30,6 +32,8 @@ function getSupabaseAdmin() {
   }
   return supabaseAdminInstance;
 }
+// ... existing code ...
+
 
 // Helper to access Supabase Admin
 const supabaseAdmin = {
@@ -243,14 +247,20 @@ async function setupVite() {
   }
 }
 
+// ... existing code ...
+  }
+}
+
 // Static file serving for SPA (used in production and on Vercel)
 if (process.env.NODE_ENV === 'production') {
-  const distPath = path.join(__dirname, 'dist');
+  const distPath = path.join(__dirname, 'client');
   app.use(express.static(distPath));
   app.get('*', (_req, res) => {
     res.sendFile(path.join(distPath, 'index.html'));
   });
 }
+// ... existing code ...
+
 
 // Start server locally, not on Vercel
 if (!process.env.VERCEL) {
