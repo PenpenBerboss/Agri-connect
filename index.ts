@@ -1,6 +1,7 @@
 import express from "express";
 import { createClient } from '@supabase/supabase-js';
 import * as dotenv from 'dotenv';
+import cors from 'cors';
 
 dotenv.config();
 
@@ -8,6 +9,12 @@ const app = express();
 app.use(express.json());
 
 // Validation des variables d'environnement critiques
+/**
+ * NOTE: Sur Vercel, assurez-vous d'avoir configuré :
+ * 1. VITE_SUPABASE_URL
+ * 2. SUPABASE_SERVICE_ROLE_KEY (Sans le préfixe VITE_ car c'est une clé secrète côté serveur)
+ */
+
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -22,8 +29,9 @@ const supabaseAdmin = createClient(
 
 // Helper pour gérer les erreurs
 const handleError = (res: any, error: any) => {
-  console.error("Database Error:", error);
-  return res.status(500).json({ error: error.message, details: error });
+  const status = error.code === 'PGRST116' ? 404 : 500;
+  console.error(`[${status}] Database Error:`, error);
+  return res.status(status).json({ error: error.message || "Internal Server Error" });
 };
 
 // Profiles
@@ -42,7 +50,7 @@ app.get("/api/profiles/:id", async (req, res) => {
 app.put("/api/profiles/:id", async (req, res) => {
   const { data, error } = await supabaseAdmin.from('profiles').update(req.body).eq('id', req.params.id).select();
   if (error) return handleError(res, error);
-  res.json(data ? data[0] : null);
+  res.json(data && data.length > 0 ? data[0] : null);
 });
 
 // Products
