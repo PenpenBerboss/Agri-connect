@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { formatPrice, cn } from '../../shared/utils';
 import { useStore } from '../../application/store/useStore';
@@ -49,9 +49,15 @@ const LocationMarker = ({ shouldLocate }: { shouldLocate: boolean }) => {
 };
 
 export const MapView = () => {
-  const { products } = useStore();
+  const { products, fetchProducts } = useStore();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [shouldLocate, setShouldLocate] = useState(false);
+
+  useEffect(() => {
+    if (products.length === 0) {
+      fetchProducts();
+    }
+  }, [fetchProducts, products.length]);
   
   // Center of Cameroon (approximate for display)
   const cameroonCenter: [number, number] = [7.3697, 12.3547];
@@ -62,9 +68,11 @@ export const MapView = () => {
     setTimeout(() => setShouldLocate(false), 1000);
   };
 
-  const filteredProducts = selectedCategory === 'all' 
-    ? products 
-    : products.filter(p => p.category === selectedCategory);
+  const filteredProducts = useMemo(() => {
+    return selectedCategory === 'all' 
+      ? products 
+      : products.filter(p => p.category === selectedCategory);
+  }, [products, selectedCategory]);
 
   return (
     <div className="h-[calc(100vh-64px)] relative flex flex-col md:flex-row overflow-hidden bg-slate-50">

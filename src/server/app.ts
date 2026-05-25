@@ -190,7 +190,7 @@ export function createApp(): Express {
 
   app.get('/api/orders', async (_req: Request, res: Response) => {
     try {
-      const { data, error } = await getSupabaseClient().from('orders').select('*');
+      const { data, error } = await getSupabaseClient().from('orders').select('*, products(name)');
       if (error) return handleError(res, error);
       return res.json(sortByCreatedAtDescending(normalizeList(data)));
     } catch (error) {

@@ -53,6 +53,16 @@ interface AppState {
   createOrder: (order: any) => Promise<void>;
 }
 
+const normalizeUser = (user: any, profile: any) => {
+  if (!profile) return user;
+  const { lat, lng, city, region, ...restProfile } = profile;
+  return {
+    ...user,
+    ...restProfile,
+    location: { lat, lng, city, region }
+  };
+};
+
 export const useStore = create<AppState>()(
   persist(
     (set, get) => ({
@@ -69,13 +79,13 @@ export const useStore = create<AppState>()(
         const user = await authService.getCurrentUser();
         if (user) {
           const profile = await apiService.getProfileById(user.id);
-          set({ user: { ...user, ...profile } as any, isAuthenticated: true });
+          set({ user: normalizeUser(user, profile), isAuthenticated: true });
         }
       },
 
       logout: async () => {
         await authService.signOut();
-        set({ user: null, isAuthenticated: false, products: [] });
+        set({ user: null, isAuthenticated: false, products: [], orders: [] });
       },
 
       register: async (data) => {
@@ -88,7 +98,7 @@ export const useStore = create<AppState>()(
         const user = await authService.getCurrentUser();
         if (user) {
           const profile = await apiService.getProfileById(user.id);
-          set({ user: { ...user, ...profile } as any, isAuthenticated: true });
+          set({ user: normalizeUser(user, profile), isAuthenticated: true });
         }
       },
 
@@ -96,7 +106,7 @@ export const useStore = create<AppState>()(
         const user = await authService.getCurrentUser();
         if (user) {
           const profile = await apiService.getProfileById(user.id);
-          set({ user: { ...user, ...profile } as any, isAuthenticated: true });
+          set({ user: normalizeUser(user, profile), isAuthenticated: true });
         } else {
           set({ user: null, isAuthenticated: false });
         }
@@ -173,7 +183,32 @@ export const useStore = create<AppState>()(
       },
 
       addProduct: async (product) => {
-        const newProduct = await apiService.createProduct(product);
+        let location = product.location || {};
+
+        // Tentative de récupération de la position exacte via le navigateur
+        if (!location.lat || !location.lng) {
+          try {
+            const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+              navigator.geolocation.getCurrentPosition(resolve, reject, {
+                enableHighAccuracy: true,
+                timeout: 5000
+              });
+            });
+            location = {
+              ...location,
+              lat: position.coords.latitude,
+              lng: position.coords.longitude
+            };
+          } catch (error) {
+            console.warn("Géolocalisation refusée ou indisponible, utilisation de la position du profil.");
+            const currentUser = get().user;
+            if (currentUser?.location) {
+              location = { ...location, ...currentUser.location };
+            }
+          }
+        }
+
+        const newProduct = await apiService.createProduct({ ...product, location });
         if (newProduct && typeof newProduct === 'object') set({ products: [newProduct, ...get().products] });
       },
 
@@ -217,7 +252,7 @@ export const useStore = create<AppState>()(
         const { user } = get();
         if (!user) return;
         const updatedProfile = await apiService.updateProfile(user.id, profileData);
-        set({ user: { ...user, ...updatedProfile } });
+        set({ user: normalizeUser(user, updatedProfile) });
       }
     }),
     {

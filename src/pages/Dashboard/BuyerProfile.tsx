@@ -18,8 +18,8 @@ export const BuyerProfile = () => {
   const { user, logout, favorites, orders, fetchOrders } = useStore();
 
   React.useEffect(() => {
-    if (orders.length === 0) fetchOrders();
-  }, [fetchOrders, orders.length]);
+    fetchOrders();
+  }, [fetchOrders]);
 
   const userOrders = Array.isArray(orders) ? orders.filter(o => o.customer_id === user?.id) : [];
 
