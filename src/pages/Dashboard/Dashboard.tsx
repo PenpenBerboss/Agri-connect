@@ -28,6 +28,7 @@ import {
   BarChart3,
   X,
   Users,
+  UserCheck,
   ShieldCheck,
   CheckCircle,
   XCircle,
@@ -45,7 +46,7 @@ import { ImageUploader } from '../../components/ImageUploader';
 import { CATEGORIES } from '../../core/constants';
 import { apiService } from '../../services/apiService';
 
-type TabType = 'overview' | 'catalogue' | 'transactions' | 'reports' | 'settings' | 'users';
+type TabType = 'overview' | 'catalogue' | 'transactions' | 'reports' | 'settings' | 'users' | 'pending';
 
 export const Dashboard = () => {
   const { user, logout, addProduct, products, orders, fetchOrders } = useStore();
@@ -75,6 +76,30 @@ export const Dashboard = () => {
     (u.email?.toLowerCase() || '').includes(userSearch.toLowerCase())
   );
 
+  const pendingSellers = users.filter((u: any) => u.role === 'farmer' && u.status === 'pending');
+
+  const validateSeller = async (seller: any) => {
+    try {
+       await apiService.updateProfileStatus(seller.id, 'active');
+       setUsers(users.map(u => u.id === seller.id ? { ...u, status: 'active' } : u));
+       toast.success(`Le vendeur ${seller.name} a été validé !`);
+    } catch (error) {
+       console.error("Error validating seller", error);
+       toast.error("Erreur de validation");
+    }
+  };
+
+  const rejectSeller = async (seller: any) => {
+    try {
+       await apiService.updateProfileStatus(seller.id, 'suspended');
+       setUsers(users.map(u => u.id === seller.id ? { ...u, status: 'suspended' } : u));
+       toast.success("Demande rejetée");
+    } catch (error) {
+       console.error("Error rejecting seller", error);
+       toast.error("Erreur de rejet");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!user) return alert('Erreur: Session utilisateur introuvable. Veuillez vous reconnecter.');
@@ -93,9 +118,8 @@ export const Dashboard = () => {
         unit: formData.get('unit') as string,
         location: {
            city: (formData.get('location') as string) || user.city || 'Yaoundé',
-           lat: (user as any).lat || 3.8480,
-           lng: (user as any).lng || 11.5021,
-           region: (user as any).region || 'Centre'
+           region: (user as any).region || 'Centre',
+           // On laisse le store demander la position GPS réelle
         },
         description: formData.get('description') as string,
         seller_id: user.id,
@@ -179,7 +203,7 @@ export const Dashboard = () => {
                      <div className={cn("absolute top-0 right-0 w-24 h-24 bg-gradient-to-br opacity-[0.03] rounded-bl-[100px] transition-all group-hover:scale-150", stat.color)} />
                      <div className="flex justify-between items-start">
                        <div className={cn("w-14 h-14 flex items-center justify-center rounded-2xl text-white shadow-2xl bg-gradient-to-br shadow-slate-900/10", stat.color)}>
-                          {React.cloneElement(stat.icon as React.ReactElement, { className: 'w-7 h-7' })}
+                          {React.cloneElement(stat.icon as React.ReactElement<any>, { className: 'w-7 h-7' })}
                        </div>
                        <div className={cn("px-3 py-1 rounded-full text-[10px] font-black tracking-widest bg-slate-50 border border-slate-100", 
                          stat.trend.startsWith('+') ? 'text-emerald-600' : 'text-rose-500'
@@ -359,6 +383,34 @@ export const Dashboard = () => {
             </div>
           </div>
         );
+      case 'pending':
+        return (
+          <div className="bg-white rounded-[2.5rem] overflow-hidden border border-slate-200 shadow-xl">
+            <div className="p-8 border-b border-slate-100">
+              <h3 className="text-xl font-black text-slate-900 tracking-tight">Demandes Vendeurs en attente</h3>
+            </div>
+            {pendingSellers.length === 0 ? (
+               <p className="p-8 text-center text-slate-500 font-bold uppercase text-xs tracking-widest">Aucune demande en attente.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <tbody className="divide-y divide-slate-50">
+                    {pendingSellers.map((seller) => (
+                      <tr key={seller.id} className="hover:bg-slate-50/50 transition-all group">
+                        <td className="px-8 py-6 font-black text-sm text-slate-900">{seller.name}</td>
+                        <td className="px-8 py-6 text-xs font-bold text-slate-400">{seller.email}</td>
+                        <td className="px-8 py-6 text-right">
+                          <button onClick={() => validateSeller(seller)} className="text-emerald-500 font-black text-[10px] uppercase tracking-widest mr-6 hover:text-emerald-700 transition-colors">Valider</button>
+                          <button onClick={() => rejectSeller(seller)} className="text-rose-500 font-black text-[10px] uppercase tracking-widest hover:text-rose-700 transition-colors">Rejeter</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        );
       case 'settings':
         return (
           <div className="max-w-4xl mx-auto space-y-12 pb-12">
@@ -508,6 +560,7 @@ export const Dashboard = () => {
             { id: 'transactions', label: 'Transactions', icon: <HandCoins className="w-5 h-5" /> },
             { id: 'reports', label: 'Rapports', icon: <BarChart3 className="w-5 h-5" /> },
             user?.role === 'admin' && { id: 'users', label: 'Utilisateurs', icon: <Users className="w-5 h-5" /> },
+            user?.role === 'admin' && { id: 'pending', label: 'Validation', icon: <UserCheck className="w-5 h-5" /> },
             { id: 'settings', label: 'Configuration', icon: <Settings2 className="w-5 h-5" /> },
           ].filter(Boolean) as any[]).map((item) => (
              <button 
@@ -520,6 +573,11 @@ export const Dashboard = () => {
              >
                <span className={cn("transition-colors", activeTab === item.id ? "text-white" : "text-slate-600 group-hover:text-primary-light")}>{item.icon}</span>
                <span>{item.label}</span>
+               {item.id === 'pending' && pendingSellers.length > 0 && (
+                <span className="bg-rose-500 text-white text-[10px] px-2 py-0.5 rounded-lg shadow-lg animate-pulse ml-2">
+                  {pendingSellers.length}
+                </span>
+               )}
                {activeTab === item.id && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white shadow-xl" />}
              </button>
           ))}

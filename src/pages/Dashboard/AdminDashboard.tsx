@@ -163,7 +163,7 @@ export const AdminDashboard = () => {
                 <div key={i} className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50">
                   <div className="flex justify-between items-start mb-6">
                     <div className={cn("w-12 h-12 flex items-center justify-center rounded-2xl text-white shadow-lg bg-gradient-to-br", stat.color)}>
-                      {React.cloneElement(stat.icon as React.ReactElement, { size: 24 })}
+                      {React.cloneElement(stat.icon as React.ReactElement<any>, { size: 24 })}
                     </div>
                     <div className={cn(
                       "flex items-center gap-1 text-[10px] font-black tracking-widest px-2.5 py-1 rounded-full",
@@ -477,7 +477,7 @@ export const AdminDashboard = () => {
                 activeTab === item.id ? "bg-primary-dark text-white" : "text-slate-400 hover:bg-slate-900 hover:text-white"
               )}
             >
-              {React.cloneElement(item.icon as React.ReactElement, { size: 18 })}
+              {React.cloneElement(item.icon as React.ReactElement<any>, { size: 18 })}
               <span>{item.label}</span>
             </button>
           ))}

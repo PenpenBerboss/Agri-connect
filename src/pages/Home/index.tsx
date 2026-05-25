@@ -20,17 +20,36 @@ import { useStore } from '../../application/store/useStore';
 
 export const Home = () => {
   const { user, toggleFavorite, isFavorite, products } = useStore();
+  const [browserLocation, setBrowserLocation] = React.useState<{ lat: number; lng: number } | null>(null);
+
+  // Demander la localisation à chaque fois que la page d'accueil est ouverte
+  React.useEffect(() => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setBrowserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+        },
+        (error) => {
+          console.warn("Accès à la localisation refusé ou indisponible.", error.message);
+        }
+      );
+    }
+  }, []);
   
   const personalRecs = RecommendationService.getPersonalRecommendations(user?.id || 'visitor', 4);
   const trendingProducts = RecommendationService.getTrendingProducts(4);
-  const nearbyProducts = (user && user.location && typeof user.location === 'object')
-    ? RecommendationService.getNearbyProducts(user.location.lat, user.location.lng, 4)
-    : products.slice(10, 14);
+
+  // Utiliser la position du navigateur en priorité, sinon celle du profil, sinon rien
+  const activeLoc = browserLocation || (user?.location?.lat && user?.location?.lng ? user.location : null);
+  const nearbyProducts = activeLoc ? RecommendationService.getNearbyProducts(activeLoc.lat, activeLoc.lng, 4) : [];
 
   return (
-    <div className="space-y-16 md:space-y-32 pb-16 md:pb-32 bg-slate-50">
+    <div className="space-y-32 pb-32 bg-slate-50">
       {/* Hero Section */}
-      <section className="relative h-[85vh] md:h-[92vh] flex items-center overflow-hidden">
+      <section className="relative h-[92vh] flex items-center overflow-hidden">
         <div className="absolute inset-0 z-0 scale-105">
           <img 
             src="/assets/back1.jpg" 
@@ -40,35 +59,35 @@ export const Home = () => {
           <div className="absolute inset-0 bg-gradient-to-tr from-slate-950 via-slate-950/60 to-transparent" />
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 text-white w-full">
+        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-12 text-white w-full">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
             className="max-w-3xl"
           >
-            <div className="inline-flex items-center space-x-3 bg-white/10 backdrop-blur-xl border border-white/20 px-4 py-2 rounded-full mb-8 shadow-2xl">
+            <div className="inline-flex items-center space-x-3 bg-white/10 backdrop-blur-xl border border-white/20 px-5 py-2 rounded-full mb-10 shadow-2xl">
                <span className="flex h-2 w-2 rounded-full bg-primary-light animate-pulse" />
-               <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/80">L'Atlas de l'Or Vert du Cameroun</span>
+               <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/80">L'Atlas de l'Or Vert du Cameroun</span>
             </div>
-            <h1 className="text-4xl sm:text-5xl md:text-[5.5rem] font-black mb-6 md:mb-8 leading-[1] tracking-tighter">
+            <h1 className="text-6xl md:text-[5.5rem] font-black mb-8 leading-[0.95] tracking-tighter">
               L'Agriculture <br/><span className="text-primary-light italic font-serif serif-bold">Sublimée.</span>
             </h1>
-            <p className="text-lg md:text-2xl text-slate-300 mb-8 md:mb-14 leading-relaxed font-black tracking-tight max-w-xl opacity-90">
+            <p className="text-xl md:text-2xl text-slate-300 mb-14 leading-relaxed font-black tracking-tight max-w-xl opacity-90">
               Connectez-vous à la terre. Achetez et vendez sans intermédiaires sur notre plateforme agricole.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row gap-6">
               <Link 
                 to="/products" 
-                className="bg-primary-dark hover:bg-white hover:text-slate-950 text-white px-8 md:px-12 py-4 md:py-5 rounded-[1.25rem] font-black text-xs uppercase tracking-widest flex items-center justify-center space-x-4 shadow-[0_20px_50px_rgba(76,175,80,0.3)] transition-all duration-500 active:scale-95 group"
+                className="bg-primary-dark hover:bg-white hover:text-slate-950 text-white px-12 py-5 rounded-[1.25rem] font-black text-sm uppercase tracking-widest flex items-center justify-center space-x-4 shadow-[0_20px_50px_rgba(76,175,80,0.3)] transition-all duration-500 active:scale-95 group"
               >
                 <span>Explorer le Marché</span>
                 <ArrowUpRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
               </Link>
               <Link 
                 to="/register" 
-                className="bg-white/5 hover:bg-white/10 backdrop-blur-2xl text-white border border-white/20 px-8 md:px-12 py-4 md:py-5 rounded-[1.25rem] font-black text-xs uppercase tracking-widest flex items-center justify-center transition-all duration-500"
+                className="bg-white/5 hover:bg-white/10 backdrop-blur-2xl text-white border border-white/20 px-12 py-5 rounded-[1.25rem] font-black text-sm uppercase tracking-widest flex items-center justify-center transition-all duration-500"
               >
                 Devenir Vendeur
               </Link>
@@ -195,7 +214,7 @@ export const Home = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
-            {personalRecs.map((product) => (
+            {Array.isArray(personalRecs) && personalRecs.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
@@ -203,23 +222,25 @@ export const Home = () => {
       )}
 
       {/* Near You Section */}
-      <section className="max-w-7xl mx-auto px-6">
-        <div className="flex flex-col md:flex-row justify-between items-center md:items-end mb-16 gap-8">
-          <div className="text-center md:text-left space-y-3">
-            <span className="text-primary-dark font-black tracking-[0.3em] uppercase text-[10px] flex items-center justify-center md:justify-start gap-2">
-              <MapPin className="w-3 h-3" /> Proximité Directe
-            </span>
-            <h2 className="text-5xl font-black text-slate-900 tracking-tighter">Près de chez Vous</h2>
-            <p className="text-slate-500 font-medium max-w-lg">Découvrez les producteurs actifs dans votre région pour réduire vos coûts logistiques.</p>
+      {nearbyProducts.length > 0 && (
+        <section className="max-w-7xl mx-auto px-6">
+          <div className="flex flex-col md:flex-row justify-between items-center md:items-end mb-16 gap-8">
+            <div className="text-center md:text-left space-y-3">
+              <span className="text-primary-dark font-black tracking-[0.3em] uppercase text-[10px] flex items-center justify-center md:justify-start gap-2">
+                <MapPin className="w-3 h-3" /> Proximité Directe
+              </span>
+              <h2 className="text-5xl font-black text-slate-900 tracking-tighter">Près de chez Vous</h2>
+              <p className="text-slate-500 font-medium max-w-lg">Découvrez les producteurs actifs dans votre région pour réduire vos coûts logistiques.</p>
+            </div>
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
-          {nearbyProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
-      </section>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+            {nearbyProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Popular Products with Sleek Cards */}
       <section className="max-w-7xl mx-auto px-6">
@@ -234,7 +255,7 @@ export const Home = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
-            {trendingProducts.map((product) => (
+            {Array.isArray(trendingProducts) && trendingProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
@@ -278,8 +299,8 @@ const ProductCard = (props: any) => {
   const { product } = props;
   return (
   <motion.div
-    whileHover={{ y: -5 }}
-    className="group flex flex-col h-full"
+    whileHover={{ y: -10 }}
+    className="group"
   >
     <div className="bg-white rounded-[2.5rem] overflow-hidden shadow-xl shadow-slate-200/40 border border-slate-200 hover:border-primary-light transition-all duration-500 flex flex-col h-full overflow-hidden">
       <div className="relative aspect-square overflow-hidden">
