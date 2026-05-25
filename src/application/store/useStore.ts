@@ -159,22 +159,22 @@ export const useStore = create<AppState>()(
 
       fetchOrders: async () => {
         const orders = await apiService.getOrders();
-        set({ orders });
+        set({ orders: Array.isArray(orders) ? orders : [] });
       },
 
       createOrder: async (orderData) => {
         const newOrder = await apiService.createOrder(orderData);
-        set({ orders: [newOrder, ...get().orders] });
+        if (newOrder && typeof newOrder === 'object') set({ orders: [newOrder, ...get().orders] });
       },
 
       fetchProducts: async () => {
         const products = await apiService.getProducts();
-        set({ products });
+        set({ products: Array.isArray(products) ? products : [] });
       },
 
       addProduct: async (product) => {
         const newProduct = await apiService.createProduct(product);
-        set({ products: [newProduct, ...get().products] });
+        if (newProduct && typeof newProduct === 'object') set({ products: [newProduct, ...get().products] });
       },
 
       updateProduct: async (product) => {
