@@ -10,17 +10,16 @@ let supabaseClient: SupabaseClient | null = null;
 
 function getSupabaseClient(): SupabaseClient {
   if (!supabaseClient) {
-    // Pour les fonctions serverless Vercel, nous nous attendons à ces variables d'environnement spécifiques.
-    // Les variables préfixées par VITE_ sont généralement pour le frontend.
-    const url = process.env.SUPABASE_URL;
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const url = process.env.SUPABASE_URL; // Variable d'environnement pour le backend
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY; // Clé de rôle de service pour le backend
 
-    if (!url || !serviceKey) {
-      // Loggue des informations spécifiques pour faciliter le débogage sur Vercel
-      console.error('CRITICAL: Variables d\'environnement Supabase côté serveur manquantes.');
-      console.error(`  SUPABASE_URL: ${url ? 'CONFIGURÉE' : 'NON CONFIGURÉE'}`);
-      console.error(`  SUPABASE_SERVICE_ROLE_KEY: ${serviceKey ? 'CONFIGURÉE' : 'NON CONFIGURÉE'}`);
-      throw new Error('Variables d\'environnement Supabase côté serveur (SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY) sont requises.');
+    if (!url) {
+      console.error('CRITICAL: SUPABASE_URL est manquante pour le client Supabase côté serveur.');
+      throw new Error('SUPABASE_URL est requise pour le client Supabase côté serveur.');
+    }
+    if (!serviceKey) {
+      console.error('CRITICAL: SUPABASE_SERVICE_ROLE_KEY est manquante pour le client Supabase côté serveur.');
+      throw new Error('SUPABASE_SERVICE_ROLE_KEY est requise pour le client Supabase côté serveur.');
     }
 
     supabaseClient = createClient(url, serviceKey); // Utilise toujours la serviceKey pour un client admin
