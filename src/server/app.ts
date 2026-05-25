@@ -10,7 +10,7 @@ let supabaseClient: SupabaseClient | null = null;
 
 function getSupabaseClient(): SupabaseClient {
   if (!supabaseClient) {
-    const url = process.env.SUPABASE_URL; // Variable d'environnement pour le backend
+    const url = process.env.VITE_SUPABASE_URL; // Variable d'environnement pour le backend
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY; // Clé de rôle de service pour le backend
 
     if (!url) {
