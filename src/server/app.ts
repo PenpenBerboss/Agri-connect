@@ -10,11 +10,11 @@ let supabaseClient: SupabaseClient | null = null;
 
 function getSupabaseClient(): SupabaseClient {
   if (!supabaseClient) {
-    const url = process.env.VITE_SUPABASE_URL; // Variable d'environnement pour le backend
+    const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY; // Clé de rôle de service pour le backend
 
     if (!url) {
-      console.error('CRITICAL: SUPABASE_URL est manquante pour le client Supabase côté serveur.');
+      console.error('CRITICAL: SUPABASE_URL ou VITE_SUPABASE_URL est manquante.');
       throw new Error('SUPABASE_URL est requise pour le client Supabase côté serveur.');
     }
     if (!serviceKey) {
