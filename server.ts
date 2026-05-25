@@ -27,7 +27,13 @@ async function startServer() {
 
   app.use(express.json());
 
-  // API Admin routes for User Management
+  // Log requests for debugging
+  app.use((req, res, next) => {
+    console.log(`${req.method} ${req.url}`);
+    next();
+  });
+
+  console.log('NODE_ENV:', process.env.NODE_ENV);
   app.get("/api/profiles", async (_req, res) => {
     const { data, error } = await getSupabaseAdmin().from('profiles').select('*');
     if (error) return res.status(500).json({ error: error.message });
