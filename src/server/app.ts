@@ -10,16 +10,20 @@ let supabaseClient: SupabaseClient | null = null;
 
 function getSupabaseClient(): SupabaseClient {
   if (!supabaseClient) {
-    const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+    // Pour les fonctions serverless Vercel, nous nous attendons à ces variables d'environnement spécifiques.
+    // Les variables préfixées par VITE_ sont généralement pour le frontend.
+    const url = process.env.SUPABASE_URL;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    const anonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
-    const key = serviceKey || anonKey;
 
-    if (!url || !key) {
-      throw new Error('Supabase environment variables are required: SUPABASE_URL (or VITE_SUPABASE_URL) and SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_ANON_KEY)');
+    if (!url || !serviceKey) {
+      // Loggue des informations spécifiques pour faciliter le débogage sur Vercel
+      console.error('CRITICAL: Variables d\'environnement Supabase côté serveur manquantes.');
+      console.error(`  SUPABASE_URL: ${url ? 'CONFIGURÉE' : 'NON CONFIGURÉE'}`);
+      console.error(`  SUPABASE_SERVICE_ROLE_KEY: ${serviceKey ? 'CONFIGURÉE' : 'NON CONFIGURÉE'}`);
+      throw new Error('Variables d\'environnement Supabase côté serveur (SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY) sont requises.');
     }
 
-    supabaseClient = createClient(url, key);
+    supabaseClient = createClient(url, serviceKey); // Utilise toujours la serviceKey pour un client admin
   }
 
   return supabaseClient;
@@ -65,7 +69,7 @@ export function createApp(): Express {
       if (error) return handleError(res, error);
       return res.json(normalizeList(data));
     } catch (error) {
-      return res.status(500).json({ error: error instanceof Error ? error.message : 'Internal Server Error' });
+      return handleError(res, error instanceof Error ? { message: error.message } : { message: 'Internal Server Error' });
     }
   });
 
@@ -75,7 +79,7 @@ export function createApp(): Express {
       if (error) return handleError(res, error);
       return res.json(data);
     } catch (error) {
-      return res.status(500).json({ error: error instanceof Error ? error.message : 'Internal Server Error' });
+      return handleError(res, error instanceof Error ? { message: error.message } : { message: 'Internal Server Error' });
     }
   });
 
@@ -85,7 +89,7 @@ export function createApp(): Express {
       if (error) return handleError(res, error);
       return res.json(data?.[0] ?? null);
     } catch (error) {
-      return res.status(500).json({ error: error instanceof Error ? error.message : 'Internal Server Error' });
+      return handleError(res, error instanceof Error ? { message: error.message } : { message: 'Internal Server Error' });
     }
   });
 
@@ -105,7 +109,7 @@ export function createApp(): Express {
       if (error) return handleError(res, error);
       return res.json(data?.[0] ?? null);
     } catch (error) {
-      return res.status(500).json({ error: error instanceof Error ? error.message : 'Internal Server Error' });
+      return handleError(res, error instanceof Error ? { message: error.message } : { message: 'Internal Server Error' });
     }
   });
 
@@ -117,7 +121,7 @@ export function createApp(): Express {
       await getSupabaseClient().auth.admin.deleteUser(req.params.id);
       return res.json({ success: true });
     } catch (error) {
-      return res.status(500).json({ error: error instanceof Error ? error.message : 'Internal Server Error' });
+      return handleError(res, error instanceof Error ? { message: error.message } : { message: 'Internal Server Error' });
     }
   });
 
@@ -127,7 +131,7 @@ export function createApp(): Express {
       if (error) return handleError(res, error);
       return res.json(sortByCreatedAtDescending(normalizeList(data)));
     } catch (error) {
-      return res.status(500).json({ error: error instanceof Error ? error.message : 'Internal Server Error' });
+      return handleError(res, error instanceof Error ? { message: error.message } : { message: 'Internal Server Error' });
     }
   });
 
@@ -137,7 +141,7 @@ export function createApp(): Express {
       if (error) return handleError(res, error);
       return res.json(data?.[0] ?? null);
     } catch (error) {
-      return res.status(500).json({ error: error instanceof Error ? error.message : 'Internal Server Error' });
+      return handleError(res, error instanceof Error ? { message: error.message } : { message: 'Internal Server Error' });
     }
   });
 
@@ -150,9 +154,9 @@ export function createApp(): Express {
         .select();
 
       if (error) return handleError(res, error);
-      return res.json(data?.[0] ?? null);
+      return res.json(data?.[0] ?? null); // S'assurer que les données sont retournées
     } catch (error) {
-      return res.status(500).json({ error: error instanceof Error ? error.message : 'Internal Server Error' });
+      return handleError(res, error instanceof Error ? { message: error.message } : { message: 'Internal Server Error' });
     }
   });
 
@@ -169,9 +173,9 @@ export function createApp(): Express {
         .select();
 
       if (error) return handleError(res, error);
-      return res.json(data?.[0] ?? null);
+      return res.json(data?.[0] ?? null); // S'assurer que les données sont retournées
     } catch (error) {
-      return res.status(500).json({ error: error instanceof Error ? error.message : 'Internal Server Error' });
+      return handleError(res, error instanceof Error ? { message: error.message } : { message: 'Internal Server Error' });
     }
   });
 
@@ -181,7 +185,7 @@ export function createApp(): Express {
       if (error) return handleError(res, error);
       return res.json({ success: true });
     } catch (error) {
-      return res.status(500).json({ error: error instanceof Error ? error.message : 'Internal Server Error' });
+      return handleError(res, error instanceof Error ? { message: error.message } : { message: 'Internal Server Error' });
     }
   });
 
@@ -191,7 +195,7 @@ export function createApp(): Express {
       if (error) return handleError(res, error);
       return res.json(sortByCreatedAtDescending(normalizeList(data)));
     } catch (error) {
-      return res.status(500).json({ error: error instanceof Error ? error.message : 'Internal Server Error' });
+      return handleError(res, error instanceof Error ? { message: error.message } : { message: 'Internal Server Error' });
     }
   });
 
@@ -201,7 +205,7 @@ export function createApp(): Express {
       if (error) return handleError(res, error);
       return res.json(data?.[0] ?? null);
     } catch (error) {
-      return res.status(500).json({ error: error instanceof Error ? error.message : 'Internal Server Error' });
+      return handleError(res, error instanceof Error ? { message: error.message } : { message: 'Internal Server Error' });
     }
   });
 
@@ -217,7 +221,7 @@ export function createApp(): Express {
       if (error) return handleError(res, error);
       return res.json(sortByCreatedAtDescending(normalizeList(data)));
     } catch (error) {
-      return res.status(500).json({ error: error instanceof Error ? error.message : 'Internal Server Error' });
+      return handleError(res, error instanceof Error ? { message: error.message } : { message: 'Internal Server Error' });
     }
   });
 
@@ -243,7 +247,7 @@ export function createApp(): Express {
 
       return res.json(review);
     } catch (error) {
-      return res.status(500).json({ error: error instanceof Error ? error.message : 'Internal Server Error' });
+      return handleError(res, error instanceof Error ? { message: error.message } : { message: 'Internal Server Error' });
     }
   });
 
@@ -253,7 +257,7 @@ export function createApp(): Express {
       if (error) return handleError(res, error);
       return res.json({ success: true });
     } catch (error) {
-      return res.status(500).json({ error: error instanceof Error ? error.message : 'Internal Server Error' });
+      return handleError(res, error instanceof Error ? { message: error.message } : { message: 'Internal Server Error' });
     }
   });
 
