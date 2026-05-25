@@ -248,8 +248,7 @@ async function setupVite() {
 }
 
 // ... existing code ...
-  }
-}
+
 
 // Static file serving for SPA (used in production and on Vercel)
 if (process.env.NODE_ENV === 'production') {
