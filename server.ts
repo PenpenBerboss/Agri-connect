@@ -20,14 +20,17 @@ function getSupabaseAdmin() {
     const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     
+    // Log in a way that is easily visible in Vercel Logs
+    console.log("--- DEBUG INIT SUPABASE ---");
+    console.log("SUPABASE_URL:", supabaseUrl ? "Present" : "Missing");
+    console.log("VITE_SUPABASE_URL:", process.env.VITE_SUPABASE_URL ? "Present" : "Missing");
+    console.log("SUPABASE_SERVICE_ROLE_KEY:", supabaseKey ? "Present" : "Missing");
+    console.log("---------------------------");
+
     if (!supabaseUrl || !supabaseKey) {
-      console.error("DEBUG: Missing SUPABASE environment variables!");
-      // List all env vars for debugging
-      console.error("DEBUG: Process ENV keys:", Object.keys(process.env));
-      throw new Error(`Missing Supabase configuration. URL: ${!!supabaseUrl}, Key: ${!!supabaseKey}`);
+      throw new Error(`Missing Supabase configuration. URL present: ${!!supabaseUrl}, Key present: ${!!supabaseKey}`);
     }
     
-    console.log("Initializing Supabase Admin with URL:", supabaseUrl);
     supabaseAdminInstance = createClient(supabaseUrl, supabaseKey);
   }
   return supabaseAdminInstance;
