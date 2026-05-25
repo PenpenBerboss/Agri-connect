@@ -12,7 +12,14 @@ const api = axios.create({
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    const message = error.response?.data?.error || error.message || 'Une erreur est survenue';
+    const data = error.response?.data;
+    
+    // On s'assure d'extraire une chaîne de caractères
+    const message = (typeof data?.error === 'string' 
+      ? data.error 
+      : (data?.message || error.message)) 
+      || 'Une erreur est survenue';
+
     console.error('API Error:', {
       status: error.response?.status,
       message: message,

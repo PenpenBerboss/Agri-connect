@@ -26,12 +26,15 @@ function getSupabaseClient(): SupabaseClient {
 }
 
 function handleError(res: Response, error: { message?: string; code?: string; details?: string; hint?: string }) {
+  console.error('Backend Error Details:', error);
+  
   const status = error.code === 'PGRST116' ? 404 : 500;
   return res.status(status).json({
-    error: error.message || 'Internal Server Error',
-    code: error.code,
-    details: error.details,
-    hint: error.hint,
+    error: typeof error.message === 'string' ? error.message : 'Internal Server Error',
+    status: 'error',
+    code: error.code || 'UNKNOWN_ERROR',
+    details: error.details || null,
+    hint: error.hint || null
   });
 }
 
