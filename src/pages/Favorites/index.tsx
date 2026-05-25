@@ -7,7 +7,7 @@ import { motion } from 'motion/react';
 
 export const Favorites = () => {
   const { favorites, toggleFavorite, products } = useStore();
-  const favoriteProducts = products.filter(p => favorites.includes(p.id));
+  const favoriteProducts = Array.isArray(products) ? products.filter(p => favorites.includes(p.id)) : [];
 
   return (
     <div className="min-h-screen bg-slate-50 pt-20 pb-32">

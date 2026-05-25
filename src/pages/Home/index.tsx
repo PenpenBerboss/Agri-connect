@@ -25,7 +25,7 @@ export const Home = () => {
   const trendingProducts = RecommendationService.getTrendingProducts(4);
   const nearbyProducts = (user && user.location && typeof user.location === 'object')
     ? RecommendationService.getNearbyProducts(user.location.lat, user.location.lng, 4)
-    : products.slice(10, 14);
+    : (Array.isArray(products) ? products.slice(10, 14) : []);
 
   return (
     <div className="space-y-32 pb-32 bg-slate-50">
@@ -195,7 +195,7 @@ export const Home = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
-            {personalRecs.map((product) => (
+            {Array.isArray(personalRecs) && personalRecs.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
@@ -215,7 +215,7 @@ export const Home = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
-          {nearbyProducts.map((product) => (
+          {Array.isArray(nearbyProducts) && nearbyProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
@@ -234,7 +234,7 @@ export const Home = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
-            {trendingProducts.map((product) => (
+            {Array.isArray(trendingProducts) && trendingProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
