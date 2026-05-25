@@ -11,43 +11,21 @@ if (process.env.NODE_ENV !== 'production') {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Initialize Supabase Admin (Lazy)
-let supabaseAdminInstance: any = null;
+// Initialize Supabase Admin
+const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-// ... existing code ...
-function getSupabaseAdmin() {
-  if (!supabaseAdminInstance) {
-    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    
-    // Log in a way that is easily visible in Vercel Logs
-    console.log("--- DEBUG INIT SUPABASE ---");
-    console.log("SUPABASE_URL:", supabaseUrl ? "Present" : "Missing");
-    console.log("VITE_SUPABASE_URL:", process.env.VITE_SUPABASE_URL ? "Present" : "Missing");
-    console.log("SUPABASE_SERVICE_ROLE_KEY:", supabaseKey ? "Present" : "Missing");
-    console.log("---------------------------");
-
-    if (!supabaseUrl || !supabaseKey) {
-       throw new Error(`Missing Supabase configuration. URL present: ${!!supabaseUrl}, Key present: ${!!supabaseKey}`);
-    }
-    
-    try {
-      supabaseAdminInstance = createClient(supabaseUrl, supabaseKey);
-      console.log("Supabase Client initialized successfully");
-    } catch (err) {
-      console.error("Failed to initialize Supabase Client:", err);
-      throw err;
-    }
-  }
-  return supabaseAdminInstance;
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error(`Missing Supabase configuration. URL present: ${!!supabaseUrl}, Key present: ${!!supabaseKey}`);
 }
-// ... existing code ...
 
+const supabaseAdminInstance = createClient(supabaseUrl, supabaseKey);
+console.log("Supabase Client initialized successfully");
 
 // Helper to access Supabase Admin
 const supabaseAdmin = {
-  from: (table: string) => getSupabaseAdmin().from(table),
-  auth: { admin: { deleteUser: (id: string) => getSupabaseAdmin().auth.admin.deleteUser(id) } }
+  from: (table: string) => supabaseAdminInstance.from(table),
+  auth: { admin: { deleteUser: (id: string) => supabaseAdminInstance.auth.admin.deleteUser(id) } }
 };
 
 const app = express();
