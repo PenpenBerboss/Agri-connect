@@ -104,7 +104,7 @@ export const Register = () => {
               <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Identité Complète</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none text-slate-300"><User className="h-5 w-5" /></div>
-                <input {...register('name', { required: true })} className="block w-full pl-14 pr-6 py-4.5 border border-slate-100 rounded-[1.5rem] bg-slate-50/50 text-slate-950 font-bold placeholder-slate-300 focus:outline-none focus:ring-4 focus:ring-primary-light/10 focus:bg-white focus:border-primary-light transition-all text-sm" placeholder="Ex: Paul Biya" />
+                <input {...register('name', { required: true })} className="block w-full pl-14 pr-6 py-4.5 border border-slate-100 rounded-[1.5rem] bg-slate-50/50 text-slate-950 font-bold placeholder-slate-300 focus:outline-none focus:ring-4 focus:ring-primary-light/10 focus:bg-white focus:border-primary-light transition-all text-sm" placeholder="Ex: Votre nom complet" />
               </div>
             </div>
 
