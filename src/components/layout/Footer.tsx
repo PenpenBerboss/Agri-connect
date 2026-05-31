@@ -18,7 +18,7 @@ export const Footer = () => {
               </div>
             </div>
             <p className="text-sm leading-relaxed">
-              La première plateforme de mise en relation directe entre les agriculteurs camerounais et les acheteurs locaux. Nous simplifions l'agrobusiness en Afrique Centrale.
+              La plateforme de mise en relation directe entre les agriculteurs camerounais et les acheteurs locaux. Nous simplifions l'agrobusiness en Afrique Centrale.
             </p>
             <div className="flex space-x-4 pt-2">
               <a href="#" className="w-9 h-9 rounded-full bg-slate-900 flex items-center justify-center hover:bg-primary-dark hover:text-white transition-all"><Facebook className="w-4 h-4" /></a>
@@ -29,7 +29,7 @@ export const Footer = () => {
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-white font-bold text-sm uppercase tracking-wider mb-6">Plateforme</h3>
+            <h3 className="text-white font-bold text-sm uppercase tracking-wider mb-6">Plateforme Agricole</h3>
             <ul className="space-y-3 text-sm">
               <li><Link to="/products" className="hover:text-primary-light transition-colors">Marketplace</Link></li>
               <li><Link to="/map" className="hover:text-primary-light transition-colors">Carte interactive</Link></li>
@@ -55,11 +55,11 @@ export const Footer = () => {
             <ul className="space-y-4 text-sm font-medium">
               <li className="flex items-start space-x-3">
                 <MapPin className="w-5 h-5 text-primary-light shrink-0" />
-                <span>Bastos, Yaoundé, Cameroun</span>
+                <span> Douala, Cameroun</span>
               </li>
               <li className="flex items-center space-x-3">
                 <Phone className="w-5 h-5 text-primary-light shrink-0" />
-                <span>+237 6XX XX XX XX</span>
+                <span>+237 691889774</span>
               </li>
               <li className="flex items-center space-x-3">
                 <Mail className="w-5 h-5 text-primary-light shrink-0" />

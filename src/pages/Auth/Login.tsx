@@ -17,11 +17,11 @@ export const Login = () => {
     setIsLoading(true);
     try {
       const pending = JSON.parse(localStorage.getItem('AGR_PENDING_SELLERS') || '[]');
-      const isPending = pending.find((s:any) => s.email === data.email);
+      const isPending = pending.find((s: any) => s.email === data.email);
       if (isPending) {
-         alert('Votre compte est en attente de validation par l\'administrateur.');
-         setIsLoading(false);
-         return;
+        alert('Votre compte est en attente de validation par l\'administrateur.');
+        setIsLoading(false);
+        return;
       }
       await login(data.email, data.password);
       toast.success('Connexion réussie !');
@@ -38,17 +38,17 @@ export const Login = () => {
       {/* Dynamic Background */}
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary-light/5 rounded-full blur-[100px] translate-x-1/2 -translate-y-1/2" />
       <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-accent/5 rounded-full blur-[100px] -translate-x-1/2 translate-y-1/2" />
-      
-      <motion.div 
+
+      <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-        className="max-w-xl w-full space-y-10 bg-white/80 backdrop-blur-2xl p-12 md:p-16 rounded-[3rem] shadow-2xl shadow-slate-200/50 border border-white relative z-10"
+        className="max-w-xl w-full space-y-10 bg-gray-200 backdrop-blur-2xl p-12 md:p-16 rounded-[3rem] shadow-2xl shadow-slate-200/50 border border-white relative z-10"
       >
         <div className="text-center">
           <Link to="/" className="inline-flex items-center space-x-3 text-slate-950 group">
             <div className="p-3 bg-slate-950 rounded-2xl group-hover:rotate-12 transition-transform shadow-lg shadow-slate-900/20">
-               <Leaf className="w-6 h-6 text-primary-light" />
+              <Leaf className="w-6 h-6 text-primary-light" />
             </div>
             <span className="text-3xl font-black tracking-tighter text-slate-950">AgriConnect</span>
           </Link>
@@ -131,19 +131,19 @@ export const Login = () => {
           </div>
 
           <div className="grid grid-cols-2 gap-6">
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={() => useStore.getState().signInWithGoogle()}
               className="flex items-center justify-center gap-3 px-6 py-4 border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 bg-white/50 hover:bg-white hover:shadow-xl transition-all shadow-slate-200/50"
             >
-               <Github className="w-4 h-4" /> Google
+              <Github className="w-4 h-4" /> Google
             </button>
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={() => useStore.getState().signInWithFacebook()}
               className="flex items-center justify-center gap-3 px-6 py-4 border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 bg-white/50 hover:bg-white hover:shadow-xl transition-all shadow-slate-200/50"
             >
-               Facebook
+              Facebook
             </button>
           </div>
         </form>
@@ -151,7 +151,7 @@ export const Login = () => {
         <p className="text-center text-xs font-black uppercase tracking-widest text-slate-400">
           Nouveau sur le marché ?{' '}
           <Link to="/register" className="text-primary-dark hover:text-primary-light flex items-center justify-center mt-3 group">
-             Créer mon profil d'acheteur <MoveRight className="ml-2 w-3 h-3 group-hover:translate-x-1 transition-transform" />
+            Créer mon profil d'acheteur <MoveRight className="ml-2 w-3 h-3 group-hover:translate-x-1 transition-transform" />
           </Link>
         </p>
       </motion.div>
